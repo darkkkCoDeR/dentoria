@@ -1,0 +1,44 @@
+from django.contrib.auth.views import LogoutView
+from django.urls import path
+
+from . import views
+from .views import DentoriaLoginView
+
+urlpatterns = [
+    path('', views.home, name='home'),
+    path('accounts/register/', views.register, name='register'),
+    path('accounts/login/', DentoriaLoginView.as_view(), name='login'),
+    path('accounts/logout/', LogoutView.as_view(), name='logout'),
+    path('accounts/activate/<uidb64>/<token>/', views.activate, name='activate'),
+    path('accounts/resend-activation/', views.resend_activation, name='resend_activation'),
+    path('accounts/profile/', views.profile, name='profile'),
+    path('accounts/profile/edit/', views.profile_edit, name='profile_edit'),
+    path('courses/', views.course_list, name='course_list'),
+    path('courses/my/', views.my_courses, name='my_courses'),
+    path('courses/create/', views.course_create, name='course_create'),
+    path('courses/<slug:slug>/', views.course_detail, name='course_detail'),
+    path('courses/<slug:slug>/edit/', views.course_edit, name='course_edit'),
+    path('courses/<slug:slug>/publish/', views.course_publish, name='course_publish'),
+    path('courses/<slug:slug>/materials/add/', views.material_add, name='material_add'),
+    path('courses/materials/<int:pk>/complete/', views.material_complete, name='material_complete'),
+    path('courses/<slug:slug>/tests/add/', views.test_add, name='test_add'),
+    path('courses/tests/<int:test_id>/take/', views.take_test, name='take_test'),
+    path('jobs/', views.job_list, name='job_list'),
+    path('jobs/create/', views.job_create, name='job_create'),
+    path('jobs/<int:pk>/', views.job_detail, name='job_detail'),
+    path('jobs/<int:pk>/edit/', views.job_edit, name='job_edit'),
+    path('internship/', views.internship_list, name='internship'),
+    path('internship/create/', views.internship_create, name='internship_create'),
+    path('internship/<int:pk>/', views.internship_detail, name='internship_detail'),
+    path('internship/<int:pk>/edit/', views.internship_edit, name='internship_edit'),
+    path('internship/<int:pk>/vote/<str:vote_type>/', views.internship_vote, name='internship_vote'),
+    path('posts/', views.post_list, name='post_list'),
+    path('posts/create/', views.post_create, name='post_create'),
+    path('posts/<int:pk>/', views.post_detail, name='post_detail'),
+    path('posts/<int:pk>/edit/', views.post_edit, name='post_edit'),
+    path('calendar/', views.calendar_list, name='calendar'),
+    path('calendar/create/', views.event_create, name='event_create'),
+    path('calendar/<int:pk>/edit/', views.event_edit, name='event_edit'),
+    path('progress/', views.progress_dashboard, name='progress'),
+    path('progress/course/<int:course_id>/', views.course_progress, name='course_progress'),
+]

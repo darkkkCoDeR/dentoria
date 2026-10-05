@@ -311,6 +311,16 @@ def save_job(request, job=None):
     return render(request, 'jobs/job_form.html', {'form': form, 'job': job})
 
 
+
+@active_required
+def delete_owned(request, model, pk, success_url, label):
+    obj = get_owned_or_admin(model, request, pk)
+    if request.method == 'POST':
+        obj.delete()
+        messages.success(request, f'{label} видалено.')
+        return redirect(success_url)
+    return render(request, 'confirm_delete.html', {'object': obj, 'label': label, 'cancel_url': success_url})
+
 def get_owned_or_admin(model, request, pk):
     if request.user.is_staff:
         return get_object_or_404(model, pk=pk)
@@ -465,6 +475,26 @@ def course_progress(request, course_id):
         'total_materials': total_materials,
         'completed_materials': completed_materials,
         'attempts': attempts,
-        'best_score': attempts.aggregate(value=Coalesce(Max('score'), Value(0)))['value'] if attempts.exists() else 0,
+        'best_score': attempts.aggregate(value=Max('score'))['value'] or 0,
         'last_attempt': attempts.first(),
     })
+
+
+@active_required
+def job_delete(request, pk):
+    return delete_owned(request, JobVacancy, pk, 'job_list', 'Вакансію')
+
+
+@active_required
+def internship_delete(request, pk):
+    return delete_owned(request, InternshipPost, pk, 'internship', 'Пост інтернатури')
+
+
+@active_required
+def post_delete(request, pk):
+    return delete_owned(request, UserPost, pk, 'post_list', 'Пост')
+
+
+@active_required
+def event_delete(request, pk):
+    return delete_owned(request, CalendarEvent, pk, 'calendar', 'Подію')

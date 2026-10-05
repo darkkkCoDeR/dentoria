@@ -1,0 +1,1 @@
+{% extends 'base.html' %}{% block content %}<h1>Підтвердження видалення</h1><div class="card card-body"><p>Видалити {{ label|lower }}: <b>{{ object }}</b>?</p><form method="post">{% csrf_token %}<button class="btn btn-danger">Видалити</button> <a class="btn btn-outline-secondary" href="{% url cancel_url %}">Скасувати</a></form></div>{% endblock %}

@@ -1,0 +1,12 @@
+{% extends 'base.html' %}{% block content %}
+<section class="hero p-5 mb-4">
+  <h1 class="display-5 fw-bold text-orange">Dentoria</h1>
+  <p class="lead">Навчальна платформа для курсів, вакансій, інтернатури, подій і відстеження успішності.</p>
+  <a class="btn btn-primary" href="{% url 'course_list' %}">Перейти до курсів</a>
+</section>
+<div class="row g-3">
+  <div class="col-md-4"><div class="card card-body"><h3>{{ courses_count }}</h3><p>Опублікованих курсів</p></div></div>
+  <div class="col-md-4"><div class="card card-body"><h3>{{ jobs_count }}</h3><p>Активних вакансій</p></div></div>
+  <div class="col-md-4"><div class="card card-body"><h3>{{ events_count }}</h3><p>Подій у календарі</p></div></div>
+</div>
+{% endblock %}

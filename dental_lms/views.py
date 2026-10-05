@@ -17,14 +17,20 @@ from django.utils.encoding import force_bytes
 from django.views.decorators.http import require_POST
 
 from .forms import (
+    CalendarEventFilterForm,
     CalendarEventForm,
+    ContentFilterForm,
+    CourseFilterForm,
     CourseForm,
     CourseMaterialForm,
+    InternshipFilterForm,
     InternshipPostForm,
+    JobFilterForm,
     JobVacancyForm,
     ProfileForm,
     RegisterForm,
     TestForm,
+    ThemeForm,
     UserPostForm,
 )
 from .models import (
@@ -40,6 +46,44 @@ from .models import (
     TestAttempt,
     UserPost,
 )
+
+
+def get_current_theme(request):
+    if request.session.get('theme'):
+        return request.session['theme']
+    if request.user.is_authenticated and hasattr(request.user, 'profile'):
+        return request.user.profile.theme
+    return 'orange'
+
+
+@require_POST
+def set_theme(request):
+    form = ThemeForm(request.POST)
+    if form.is_valid():
+        theme = form.cleaned_data['theme']
+        request.session['theme'] = theme
+        if request.user.is_authenticated and hasattr(request.user, 'profile'):
+            request.user.profile.theme = theme
+            request.user.profile.save(update_fields=['theme', 'updated_at'])
+        messages.success(request, 'Тему змінено.')
+    return redirect(request.META.get('HTTP_REFERER') or 'home')
+
+
+def apply_search(queryset, query, fields):
+    if not query:
+        return queryset
+    condition = Q()
+    for field in fields:
+        condition |= Q(**{f'{field}__icontains': query})
+    return queryset.filter(condition)
+
+
+def apply_common_sort(queryset, sort):
+    if sort == 'oldest':
+        return queryset.order_by('created_at')
+    if sort == 'title':
+        return queryset.order_by('title')
+    return queryset.order_by('-created_at')
 
 
 class DentoriaLoginView(LoginView):
@@ -141,15 +185,27 @@ def profile_edit(request):
 
 @active_required
 def course_list(request):
+    form = CourseFilterForm(request.GET or None)
     courses = Course.objects.filter(status=Course.PUBLISHED).select_related('author')
-    return render(request, 'courses/course_list.html', {'courses': courses})
+    if form.is_valid():
+        query = form.cleaned_data.get('q')
+        courses = apply_search(courses, query, ['title', 'description', 'author__username'])
+        courses = apply_common_sort(courses, form.cleaned_data.get('sort'))
+    return render(request, 'courses/course_list.html', {'courses': courses, 'filter_form': form, 'page_title': 'Усі курси'})
 
 
 @active_required
 def my_courses(request):
+    form = CourseFilterForm(request.GET or None)
     courses = Course.objects.filter(author=request.user)
-    return render(request, 'courses/my_courses.html', {'courses': courses})
-
+    if form.is_valid():
+        query = form.cleaned_data.get('q')
+        status = form.cleaned_data.get('status')
+        if status:
+            courses = courses.filter(status=status)
+        courses = apply_search(courses, query, ['title', 'description'])
+        courses = apply_common_sort(courses, form.cleaned_data.get('sort'))
+    return render(request, 'courses/my_courses.html', {'courses': courses, 'filter_form': form, 'page_title': 'Мої курси'})
 
 @active_required
 def course_create(request):
@@ -276,9 +332,25 @@ def take_test(request, test_id):
 
 @active_required
 def job_list(request):
-    jobs = JobVacancy.objects.filter(is_active=True).select_related('author')
-    return render(request, 'jobs/job_list.html', {'jobs': jobs})
-
+    form = JobFilterForm(request.GET or None)
+    jobs = JobVacancy.objects.select_related('author')
+    if form.is_valid():
+        query = form.cleaned_data.get('q')
+        city = form.cleaned_data.get('city')
+        active = form.cleaned_data.get('active')
+        jobs = apply_search(jobs, query, ['title', 'clinic_name', 'city', 'short_description', 'full_description', 'requirements'])
+        if city:
+            jobs = jobs.filter(city__icontains=city)
+        if active == 'active':
+            jobs = jobs.filter(is_active=True)
+        elif active == 'inactive':
+            jobs = jobs.filter(is_active=False)
+        else:
+            jobs = jobs.filter(is_active=True)
+        jobs = apply_common_sort(jobs, form.cleaned_data.get('sort'))
+    else:
+        jobs = jobs.filter(is_active=True).order_by('-created_at')
+    return render(request, 'jobs/job_list.html', {'jobs': jobs, 'filter_form': form})
 
 @active_required
 def job_detail(request, pk):
@@ -329,12 +401,25 @@ def get_owned_or_admin(model, request, pk):
 
 @active_required
 def internship_list(request):
+    form = InternshipFilterForm(request.GET or None)
     posts = InternshipPost.objects.annotate(
         plus_count=Count('votes', filter=Q(votes__vote_type=InternshipVote.PLUS)),
         minus_count=Count('votes', filter=Q(votes__vote_type=InternshipVote.MINUS)),
-    ).annotate(rating_value=F('plus_count') - F('minus_count')).order_by('-rating_value', '-created_at')
-    return render(request, 'internship/post_list.html', {'posts': posts})
-
+    ).annotate(rating_value=F('plus_count') - F('minus_count')).select_related('author')
+    if form.is_valid():
+        posts = apply_search(posts, form.cleaned_data.get('q'), ['title', 'content', 'author__username'])
+        sort = form.cleaned_data.get('sort')
+        if sort == 'newest':
+            posts = posts.order_by('-created_at')
+        elif sort == 'oldest':
+            posts = posts.order_by('created_at')
+        elif sort == 'title':
+            posts = posts.order_by('title')
+        else:
+            posts = posts.order_by('-rating_value', '-created_at')
+    else:
+        posts = posts.order_by('-rating_value', '-created_at')
+    return render(request, 'internship/post_list.html', {'posts': posts, 'filter_form': form})
 
 @active_required
 def internship_detail(request, pk):
@@ -383,8 +468,14 @@ def internship_vote(request, pk, vote_type):
 
 @active_required
 def post_list(request):
-    return render(request, 'posts/post_list.html', {'posts': UserPost.objects.select_related('author')})
-
+    form = ContentFilterForm(request.GET or None)
+    posts = UserPost.objects.select_related('author')
+    if form.is_valid():
+        posts = apply_search(posts, form.cleaned_data.get('q'), ['title', 'content', 'author__username'])
+        posts = apply_common_sort(posts, form.cleaned_data.get('sort'))
+    else:
+        posts = posts.order_by('-created_at')
+    return render(request, 'posts/post_list.html', {'posts': posts, 'filter_form': form})
 
 @active_required
 def post_detail(request, pk):
@@ -418,9 +509,20 @@ def save_post(request, post=None):
 
 @active_required
 def calendar_list(request):
+    form = CalendarEventFilterForm(request.GET or None)
     events = CalendarEvent.objects.filter(Q(is_public=True) | Q(author=request.user)).select_related('author', 'related_course')
-    return render(request, 'calendar/event_list.html', {'events': events})
-
+    if form.is_valid():
+        events = apply_search(events, form.cleaned_data.get('q'), ['title', 'description', 'author__username'])
+        event_type = form.cleaned_data.get('event_type')
+        visibility = form.cleaned_data.get('visibility')
+        if event_type:
+            events = events.filter(event_type=event_type)
+        if visibility == 'public':
+            events = events.filter(is_public=True)
+        elif visibility == 'private':
+            events = events.filter(is_public=False, author=request.user)
+        events = apply_common_sort(events, form.cleaned_data.get('sort'))
+    return render(request, 'calendar/event_list.html', {'events': events, 'filter_form': form})
 
 @active_required
 def event_create(request):

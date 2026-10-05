@@ -8,21 +8,31 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="{% static 'css/site.css' %}" rel="stylesheet">
 </head>
-<body class="theme-{% if user.is_authenticated and user.profile %}{{ user.profile.theme }}{% else %}orange{% endif %}">
-<nav class="navbar navbar-expand-lg navbar-dark">
+<body class="theme-{% if request.session.theme %}{{ request.session.theme }}{% elif user.is_authenticated and user.profile %}{{ user.profile.theme }}{% else %}orange{% endif %}">
+<nav class="navbar navbar-expand-xl navbar-dark sticky-top">
   <div class="container">
-    <a class="navbar-brand fw-bold" href="{% url 'home' %}">Dentoria</a>
+    <a class="navbar-brand fw-black" href="{% url 'home' %}">🦷 Dentoria</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav"><span class="navbar-toggler-icon"></span></button>
     <div class="collapse navbar-collapse" id="nav">
       {% if user.is_authenticated %}
       <ul class="navbar-nav me-auto">
-        <li class="nav-item"><a class="nav-link" href="{% url 'course_list' %}">Курси</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'course_list' %}">Усі курси</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'my_courses' %}">Мої курси</a></li>
         <li class="nav-item"><a class="nav-link" href="{% url 'job_list' %}">Вакансії</a></li>
         <li class="nav-item"><a class="nav-link" href="{% url 'internship' %}">Інтернатура</a></li>
         <li class="nav-item"><a class="nav-link" href="{% url 'post_list' %}">Пости</a></li>
         <li class="nav-item"><a class="nav-link" href="{% url 'calendar' %}">Календар</a></li>
         <li class="nav-item"><a class="nav-link" href="{% url 'progress' %}">Успішність</a></li>
       </ul>
+      <form class="theme-switcher d-flex align-items-center gap-2 me-2" method="post" action="{% url 'set_theme' %}">
+        {% csrf_token %}
+        <select class="form-select form-select-sm" name="theme" aria-label="Тема">
+          <option value="orange" {% if request.session.theme == 'orange' or not request.session.theme and user.profile.theme == 'orange' %}selected{% endif %}>Orange</option>
+          <option value="light" {% if request.session.theme == 'light' or not request.session.theme and user.profile.theme == 'light' %}selected{% endif %}>Light</option>
+          <option value="dark" {% if request.session.theme == 'dark' or not request.session.theme and user.profile.theme == 'dark' %}selected{% endif %}>Dark</option>
+        </select>
+        <button class="btn btn-light btn-sm" type="submit">Тема</button>
+      </form>
       <a class="btn btn-outline-light btn-sm me-2" href="{% url 'profile' %}">Профіль</a>
       <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="btn btn-light btn-sm">Вийти</button></form>
       {% else %}
@@ -31,11 +41,11 @@
     </div>
   </div>
 </nav>
-<main class="container py-4">
-  {% for message in messages %}<div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>{% endfor %}
+<main class="container py-4 py-lg-5">
+  {% for message in messages %}<div class="alert alert-{{ message.tags|default:'info' }} shadow-sm rounded-4">{{ message }}</div>{% endfor %}
   {% block content %}{% endblock %}
 </main>
-<footer class="container py-4 text-center text-muted">Dentoria LMS · Django + Bootstrap + PostgreSQL</footer>
+<footer class="container py-4 text-center text-muted">Dentoria LMS · сучасна навчальна платформа для стоматології</footer>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

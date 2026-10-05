@@ -1,12 +1,21 @@
 {% extends 'base.html' %}{% block content %}
-<section class="hero p-5 mb-4">
-  <h1 class="display-5 fw-bold text-orange">Dentoria</h1>
-  <p class="lead">Навчальна платформа для курсів, вакансій, інтернатури, подій і відстеження успішності.</p>
-  <a class="btn btn-primary" href="{% url 'course_list' %}">Перейти до курсів</a>
+<section class="hero p-4 p-lg-5 mb-4">
+  <div class="row align-items-center g-4">
+    <div class="col-lg-8">
+      <span class="badge text-bg-warning mb-3">Django LMS для стоматології</span>
+      <h1 class="display-4 fw-bold text-orange mb-3">Навчайтесь, публікуйте курси і тримайте клінічний розвиток під контролем</h1>
+      <p class="lead text-muted">Dentoria обʼєднує курси, тести, вакансії, інтернатуру, професійні пости та календар подій в одному Bootstrap-інтерфейсі.</p>
+      <div class="d-flex flex-wrap gap-2 mt-4">
+        <a class="btn btn-primary btn-lg" href="{% url 'course_list' %}">Усі курси</a>
+        <a class="btn btn-outline-primary btn-lg" href="{% url 'my_courses' %}">Мої курси</a>
+      </div>
+    </div>
+    <div class="col-lg-4"><div class="card card-body p-4"><div class="small-label">Фокус платформи</div><h3>AI, профілактика, цифрова стоматологія</h3><p class="text-muted mb-0">Контент оновлено під актуальні професійні теми: ШІ-діагностика, телестоматологія, профілактика карієсу, цифрові протоколи.</p></div></div>
+  </div>
 </section>
 <div class="row g-3">
-  <div class="col-md-4"><div class="card card-body"><h3>{{ courses_count }}</h3><p>Опублікованих курсів</p></div></div>
-  <div class="col-md-4"><div class="card card-body"><h3>{{ jobs_count }}</h3><p>Активних вакансій</p></div></div>
-  <div class="col-md-4"><div class="card card-body"><h3>{{ events_count }}</h3><p>Подій у календарі</p></div></div>
+  <div class="col-md-4"><div class="card card-body stats-card"><div class="small-label">Курси</div><h2>{{ courses_count }}</h2><p class="mb-0 text-muted">Опублікованих програм</p></div></div>
+  <div class="col-md-4"><div class="card card-body stats-card"><div class="small-label">Вакансії</div><h2>{{ jobs_count }}</h2><p class="mb-0 text-muted">Активних пропозицій</p></div></div>
+  <div class="col-md-4"><div class="card card-body stats-card"><div class="small-label">Календар</div><h2>{{ events_count }}</h2><p class="mb-0 text-muted">Подій і вебінарів</p></div></div>
 </div>
 {% endblock %}

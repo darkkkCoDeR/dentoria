@@ -185,3 +185,66 @@ class CalendarEventForm(BootstrapFormMixin, forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._apply_bootstrap()
+
+
+class ThemeForm(BootstrapFormMixin, forms.Form):
+    theme = forms.ChoiceField(label='Тема', choices=Profile.THEME_CHOICES)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._apply_bootstrap()
+
+
+class SearchFilterForm(BootstrapFormMixin, forms.Form):
+    q = forms.CharField(label='Пошук', required=False, widget=forms.TextInput(attrs={'placeholder': 'Ключові слова'}))
+    sort = forms.ChoiceField(
+        label='Сортування',
+        required=False,
+        choices=[('newest', 'Найновіші'), ('oldest', 'Найстаріші'), ('title', 'За назвою')],
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._apply_bootstrap()
+
+
+class CourseFilterForm(SearchFilterForm):
+    status = forms.ChoiceField(
+        label='Статус',
+        required=False,
+        choices=[('', 'Усі статуси'), (Course.PUBLISHED, 'Опубліковані'), (Course.DRAFT, 'Чернетки'), (Course.ARCHIVED, 'Архів')],
+    )
+
+
+class JobFilterForm(SearchFilterForm):
+    city = forms.CharField(label='Місто', required=False, widget=forms.TextInput(attrs={'placeholder': 'Напр. Київ'}))
+    active = forms.ChoiceField(
+        label='Стан',
+        required=False,
+        choices=[('', 'Усі'), ('active', 'Активні'), ('inactive', 'Неактивні')],
+    )
+
+
+class ContentFilterForm(SearchFilterForm):
+    sort = forms.ChoiceField(
+        label='Сортування',
+        required=False,
+        choices=[('newest', 'Найновіші'), ('oldest', 'Найстаріші'), ('title', 'За назвою')],
+    )
+
+
+class InternshipFilterForm(SearchFilterForm):
+    sort = forms.ChoiceField(
+        label='Сортування',
+        required=False,
+        choices=[('rating', 'За рейтингом'), ('newest', 'Найновіші'), ('oldest', 'Найстаріші'), ('title', 'За назвою')],
+    )
+
+
+class CalendarEventFilterForm(SearchFilterForm):
+    event_type = forms.ChoiceField(label='Тип', required=False, choices=[('', 'Усі типи')] + CalendarEvent.TYPE_CHOICES)
+    visibility = forms.ChoiceField(
+        label='Видимість',
+        required=False,
+        choices=[('', 'Усі'), ('public', 'Публічні'), ('private', 'Приватні')],
+    )

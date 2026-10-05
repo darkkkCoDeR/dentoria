@@ -20,240 +20,200 @@ from dental_lms.models import (
 
 
 class Command(BaseCommand):
-    help = "Create demo Dentoria users and content for local manual testing."
+    help = "Create modern Dentoria demo content for local manual testing."
 
     def handle(self, *args, **options):
         demo_password = "DemoPass123"
-        admin = self._user("admin_demo", "admin@dentoria.test", demo_password, is_staff=True, is_superuser=True)
-        teacher = self._user("teacher_demo", "teacher@dentoria.test", demo_password)
+        editorial = self._user("dentoria_editor", "editor@dentoria.test", demo_password, is_staff=True)
         student = self._user("student_demo", "student@dentoria.test", demo_password)
-        intern = self._user("intern_demo", "intern@dentoria.test", demo_password)
+        admin = self._user("admin_demo", "admin@dentoria.test", demo_password, is_staff=True, is_superuser=True)
 
-        teacher.profile.specialization = "Терапевтична стоматологія"
-        teacher.profile.bio = "Викладач Dentoria, автор базових курсів."
-        teacher.profile.avatar_url = "https://res.cloudinary.com/demo/image/upload/sample.jpg"
-        teacher.profile.theme = "orange"
-        teacher.profile.save()
+        demo_users = User.objects.filter(username__in=["dentoria_editor", "student_demo", "admin_demo", "teacher_demo", "intern_demo"])
+        self._clear_demo_content(demo_users)
+
+        editorial.first_name = "Dentoria"
+        editorial.last_name = "Editorial"
+        editorial.save()
+        editorial.profile.specialization = "Редакція стоматологічної освіти"
+        editorial.profile.bio = "Єдиний редакційний акаунт для демо-постів, вакансій і подій Dentoria."
+        editorial.profile.avatar_url = "https://images.unsplash.com/photo-1606811971618-4486d14f3f99?q=80&w=900"
+        editorial.profile.theme = "orange"
+        editorial.profile.save()
 
         student.profile.specialization = "Студент стоматології"
-        student.profile.bio = "Тестовий студент для перевірки прогресу."
+        student.profile.bio = "Тестовий студент для перевірки прогресу, тем і проходження курсів."
         student.profile.theme = "light"
         student.profile.save()
 
-        course = self._course(
-            author=teacher,
-            title="Основи ендодонтії",
-            description="Практичний вступ до діагностики, інструментації та пломбування кореневих каналів.",
-            status=Course.PUBLISHED,
-            cover_image_url="https://res.cloudinary.com/demo/image/upload/sample.jpg",
-        )
-        draft = self._course(
-            author=teacher,
-            title="Чернетка курсу з ортопедії",
-            description="Курс ще готується і має бути видимим лише автору.",
-            status=Course.DRAFT,
-        )
+        courses = [
+            self._course(
+                editorial,
+                "AI у стоматологічній діагностиці",
+                "Як безпечно використовувати ШІ для аналізу знімків, документації та клінічного triage без заміни лікарського рішення.",
+                Course.PUBLISHED,
+                "https://images.unsplash.com/photo-1581093458791-9d09f85a7b95?q=80&w=1200",
+            ),
+            self._course(
+                editorial,
+                "Профілактика карієсу та пародонтальних захворювань",
+                "Сучасний профілактичний підхід: оцінка ризиків, мотивація пацієнта, фториди, контроль біоплівки та recall-система.",
+                Course.PUBLISHED,
+                "https://images.unsplash.com/photo-1609840114035-3c981b782dfe?q=80&w=1200",
+            ),
+            self._course(
+                editorial,
+                "Цифровий протокол ендодонтії",
+                "Практичний курс про діагностику, ізоляцію, робочу довжину, інструментацію, іригацію та якісну обтурацію.",
+                Course.PUBLISHED,
+                "https://images.unsplash.com/photo-1629909613654-28e377c37b09?q=80&w=1200",
+            ),
+            self._course(
+                editorial,
+                "Чернетка: телестоматологія в клініці",
+                "Матеріали ще готуються. Курс демонструє режим чернетки та поступове наповнення.",
+                Course.DRAFT,
+                "",
+            ),
+        ]
 
-        material_text = self._material(
-            course=course,
-            title="Вступний конспект",
-            material_type="text",
-            text_content="Ендодонтичне лікування починається з діагностики та ізоляції робочого поля.",
-            order=1,
-        )
-        material_file = self._material(
-            course=course,
-            title="PDF чекліст інструментів",
-            material_type="file",
-            file_url="https://res.cloudinary.com/demo/raw/upload/sample.pdf",
-            order=2,
-        )
-        self._material(
-            course=course,
-            title="Схема будови зуба",
-            material_type="image",
-            image_url="https://res.cloudinary.com/demo/image/upload/sample.jpg",
-            order=3,
-        )
-        self._material(
-            course=course,
-            title="Вебінар з протоколу лікування",
-            material_type="video",
-            external_url="https://example.com/webinar/endodontics",
-            order=4,
-        )
-        self._material(
-            course=draft,
-            title="План майбутнього курсу",
-            material_type="text",
-            text_content="Додати лекції, фото клінічних кейсів та фінальний тест.",
-            order=1,
-        )
+        for index, course in enumerate(courses, start=1):
+            self._material(course, "Клінічний конспект", "text", index, text_content=f"Ключові принципи теми: {course.title}. Додайте нотатки, клінічні приклади та алгоритми прийняття рішень.")
+            self._material(course, "Додатковий матеріал", "link", index + 10, external_url="https://www.who.int/health-topics/oral-health")
+            if course.status == Course.PUBLISHED:
+                self._material(course, "Ілюстрація протоколу", "image", index + 20, image_url=course.cover_image_url or "https://images.unsplash.com/photo-1606811971618-4486d14f3f99?q=80&w=1200")
+                test = self._test(course, f"Тест: {course.title}", "Швидка перевірка розуміння матеріалу.", 60)
+                question = self._question(test, "Який підхід найкраще відповідає сучасній доказовій стоматології?", 1)
+                self._answer(question, "Оцінка ризиків, документація та персоналізований план", True)
+                self._answer(question, "Однаковий план лікування для всіх пацієнтів", False)
 
-        test = self._test(course, "Фінальний тест з ендодонтії", "Коротка перевірка базових понять.", 60)
-        question = self._question(test, "Що потрібно зробити перед початком ендодонтичного лікування?", 1)
-        self._answer(question, "Провести діагностику та ізоляцію", True)
-        self._answer(question, "Одразу пломбувати канал", False)
-        question_two = self._question(test, "Який матеріал є частиною навчального курсу?", 2)
-        self._answer(question_two, "PDF чекліст інструментів", True)
-        self._answer(question_two, "Рецепт кави", False)
-
-        enrollment, _ = CourseEnrollment.objects.get_or_create(user=student, course=course)
-        MaterialProgress.objects.update_or_create(
-            user=student,
-            material=material_text,
-            defaults={"is_completed": True, "completed_at": timezone.now()},
-        )
-        MaterialProgress.objects.update_or_create(
-            user=student,
-            material=material_file,
-            defaults={"is_completed": True, "completed_at": timezone.now()},
-        )
-        enrollment.progress = 50
+        main_course = courses[0]
+        enrollment, _ = CourseEnrollment.objects.get_or_create(user=student, course=main_course)
+        completed = main_course.materials.first()
+        if completed:
+            MaterialProgress.objects.update_or_create(
+                user=student,
+                material=completed,
+                defaults={"is_completed": True, "completed_at": timezone.now()},
+            )
+        enrollment.progress = 33
         enrollment.save()
-        TestAttempt.objects.get_or_create(
-            user=student,
-            test=test,
-            defaults={"score": 75, "max_score": 100, "passed": True},
-        )
+        first_test = main_course.tests.first()
+        if first_test:
+            TestAttempt.objects.get_or_create(user=student, test=first_test, defaults={"score": 82, "max_score": 100, "passed": True})
 
-        JobVacancy.objects.get_or_create(
-            title="Асистент стоматолога",
-            clinic_name="Dentoria Clinic",
-            city="Київ",
-            defaults={
-                "author": intern,
-                "short_description": "Позиція для молодого спеціаліста у дружній команді.",
-                "full_description": "Робота з лікарем, підготовка кабінету, ведення базової документації.",
-                "requirements": "Базові знання стоматології, уважність, бажання навчатися.",
-                "responsibilities": "Підготовка інструментів, допомога під час прийому, стерилізація.",
-                "conditions": "Гнучкий графік, наставництво, можливість професійного росту.",
-                "contact_info": "hr@dentoria.test",
-                "is_active": True,
+        for job in [
+            {
+                "title": "Асистент стоматолога у цифрову клініку",
+                "clinic_name": "Dentoria Digital Clinic",
+                "city": "Київ",
+                "short_description": "Роль для спеціаліста, який хоче працювати з цифровими протоколами, скануванням і сучасною комунікацією з пацієнтом.",
+                "requirements": "Уважність, базові знання асептики, готовність навчатися intraoral scanning workflow.",
+                "responsibilities": "Підготовка кабінету, асистування, стерилізація, допомога з цифровою документацією.",
             },
-        )
-        JobVacancy.objects.get_or_create(
-            title="Лікар-інтерн",
-            clinic_name="Orange Dental Hub",
-            city="Львів",
-            defaults={
-                "author": teacher,
-                "short_description": "Інтернатура з наставником і реальними клінічними кейсами.",
-                "full_description": "Програма для інтернів з регулярним розбором кейсів.",
-                "requirements": "Медична освіта, відповідальність, комунікабельність.",
-                "responsibilities": "Участь у прийомах, ведення історій, навчальні зустрічі.",
-                "conditions": "Часткова зайнятість, навчальні модулі, сертифікат.",
-                "contact_info": "internship@dentoria.test",
-                "is_active": True,
+            {
+                "title": "Лікар-інтерн з фокусом на профілактику",
+                "clinic_name": "Orange Dental Hub",
+                "city": "Львів",
+                "short_description": "Інтернатура з наставником, щотижневими розборами кейсів і профілактичними протоколами.",
+                "requirements": "Медична освіта, комунікабельність, бажання працювати за доказовими протоколами.",
+                "responsibilities": "Участь у прийомах, ведення історій, мотиваційні бесіди з пацієнтами.",
             },
-        )
+            {
+                "title": "Координатор освітніх вебінарів Dentoria",
+                "clinic_name": "Dentoria Academy",
+                "city": "Remote",
+                "short_description": "Підготовка вебінарів, календаря подій і навчальних матеріалів для стоматологічної спільноти.",
+                "requirements": "Організованість, грамотна українська, базове розуміння стоматологічних тем.",
+                "responsibilities": "Публікація подій, комунікація зі спікерами, оновлення матеріалів LMS.",
+            },
+        ]:
+            JobVacancy.objects.create(
+                author=editorial,
+                full_description=f"{job['short_description']} Позиція створена для демонстрації фільтрів вакансій у Dentoria.",
+                conditions="Гнучкий графік, наставництво, прозорі задачі, розвиток у команді.",
+                contact_info="careers@dentoria.test",
+                is_active=True,
+                **job,
+            )
 
-        internship_post = InternshipPost.objects.get_or_create(
-            title="Поради для першого місяця інтернатури",
-            defaults={
-                "author": intern,
-                "content": "Ведіть щоденник кейсів, ставте питання наставнику і повторюйте протоколи щодня.",
-                "image_url": "https://res.cloudinary.com/demo/image/upload/sample.jpg",
-            },
-        )[0]
-        InternshipPost.objects.get_or_create(
-            title="Список корисних вебінарів",
-            defaults={
-                "author": teacher,
-                "content": "Добірка відкритих вебінарів з терапії, ортопедії та комунікації з пацієнтом.",
-            },
-        )
-        InternshipVote.objects.update_or_create(post=internship_post, user=teacher, defaults={"vote_type": InternshipVote.PLUS})
-        InternshipVote.objects.update_or_create(post=internship_post, user=student, defaults={"vote_type": InternshipVote.PLUS})
+        internship_posts = [
+            ("Як інтерну працювати з AI-підказками без клінічних помилок", "ШІ може допомогти структурувати документацію або знайти пропущені деталі, але остаточне рішення завжди має залишатися за лікарем і наставником."),
+            ("Чекліст першого прийому: що фіксувати в історії", "Скарга, анамнез, фото, рентген-дані, пародонтальний статус, ризики карієсу та узгоджений план — мінімальна база якісної документації."),
+            ("Телестоматологія: коли онлайн-консультація доречна", "Попередній triage, контроль після втручання та навчання гігієні можуть працювати онлайн, але діагноз і лікування часто потребують очного огляду."),
+        ]
+        for index, (title, content) in enumerate(internship_posts):
+            post = InternshipPost.objects.create(author=editorial, title=title, content=content, image_url="https://images.unsplash.com/photo-1606811971618-4486d14f3f99?q=80&w=1200" if index == 0 else "")
+            InternshipVote.objects.update_or_create(post=post, user=student, defaults={"vote_type": InternshipVote.PLUS})
 
-        UserPost.objects.get_or_create(
-            title="Як я готуюся до тестів Dentoria",
-            defaults={
-                "author": student,
-                "content": "Спочатку проходжу матеріали, потім виписую терміни і тільки після цього складаю тест.",
-                "image_url": "https://res.cloudinary.com/demo/image/upload/sample.jpg",
-            },
-        )
-        UserPost.objects.get_or_create(
-            title="Добірка джерел для інтернів",
-            defaults={
-                "author": teacher,
-                "content": "Рекомендую почати з протоколів ізоляції, діагностики та планування лікування.",
-            },
-        )
+        user_posts = [
+            ("AI в стоматології: що варто тестувати вже зараз", "Найбільш практичні сценарії для клініки: попередня розмітка знімків, пошук ризиків у документації, підготовка patient-friendly пояснень і контроль follow-up."),
+            ("Профілактика як головна стратегія 2026", "Фокус зміщується від реактивного лікування до ризик-орієнтованого супроводу: recall, контроль біоплівки, фториди, харчові звички та мотиваційне інтервʼю."),
+            ("Цифровий шлях пацієнта в стоматології", "Онлайн-запис, зрозумілі нагадування, цифрові знімки, фото-протоколи та прозорий план лікування підвищують довіру пацієнтів."),
+            ("Оральне здоровʼя і системні захворювання", "Стоматологічна команда має враховувати загальний стан пацієнта, медикаменти, метаболічні ризики та звʼязок із хронічними станами."),
+        ]
+        for index, (title, content) in enumerate(user_posts):
+            UserPost.objects.create(
+                author=editorial,
+                title=title,
+                content=content,
+                image_url="https://images.unsplash.com/photo-1609840114035-3c981b782dfe?q=80&w=1200" if index % 2 == 0 else "",
+            )
 
-        CalendarEvent.objects.get_or_create(
-            title="Публічний вебінар: сучасна ендодонтія",
-            starts_at=timezone.now() + timezone.timedelta(days=2),
-            defaults={
-                "author": teacher,
-                "description": "Відкрита подія для всіх користувачів Dentoria.",
-                "event_type": "webinar",
-                "external_url": "https://example.com/webinar",
-                "ends_at": timezone.now() + timezone.timedelta(days=2, hours=2),
-                "is_public": True,
-            },
-        )
-        CalendarEvent.objects.get_or_create(
-            title="Приватне нагадування: повторити тест",
-            starts_at=timezone.now() + timezone.timedelta(days=1),
-            defaults={
-                "author": student,
-                "description": "Особиста подія студента.",
-                "event_type": "personal",
-                "ends_at": timezone.now() + timezone.timedelta(days=1, hours=1),
-                "is_public": False,
-            },
-        )
+        now = timezone.now()
+        events = [
+            ("Вебінар: AI-рішення в dental imaging", "webinar", "Порівняємо сценарії використання ШІ у 2D-знімках, документації та комунікації з пацієнтом.", 2, True),
+            ("Практикум: профілактичний план для пацієнта з високим caries risk", "webinar", "Ризик-орієнтований recall, домашній догляд і контроль результатів.", 5, True),
+            ("Курс Dentoria: цифровий протокол ендодонтії", "internal_course", "Подія привʼязана до внутрішнього курсу LMS.", 7, True),
+            ("Редакційне планування контенту", "personal", "Приватна службова подія редакції Dentoria.", 1, False),
+        ]
+        for title, event_type, description, days, is_public in events:
+            CalendarEvent.objects.create(
+                author=editorial,
+                title=title,
+                description=description,
+                event_type=event_type,
+                external_url="https://example.com/dentoria-event" if event_type == "webinar" else "",
+                related_course=courses[2] if event_type == "internal_course" else None,
+                starts_at=now + timezone.timedelta(days=days),
+                ends_at=now + timezone.timedelta(days=days, hours=2),
+                is_public=is_public,
+            )
 
-        self.stdout.write(self.style.SUCCESS("Demo data created."))
+        self.stdout.write(self.style.SUCCESS("Modern demo data created."))
         self.stdout.write("Users:")
-        self.stdout.write(f"  admin_demo / {demo_password}")
-        self.stdout.write(f"  teacher_demo / {demo_password}")
+        self.stdout.write(f"  dentoria_editor / {demo_password}")
         self.stdout.write(f"  student_demo / {demo_password}")
-        self.stdout.write(f"  intern_demo / {demo_password}")
+        self.stdout.write(f"  admin_demo / {demo_password}")
+
+    def _clear_demo_content(self, demo_users):
+        Course.objects.filter(author__in=demo_users).delete()
+        JobVacancy.objects.filter(author__in=demo_users).delete()
+        InternshipPost.objects.filter(author__in=demo_users).delete()
+        UserPost.objects.filter(author__in=demo_users).delete()
+        CalendarEvent.objects.filter(author__in=demo_users).delete()
 
     def _user(self, username, email, password, **flags):
         user, created = User.objects.get_or_create(username=username, defaults={"email": email, **flags})
-        if created:
-            user.set_password(password)
-            user.is_active = True
-            for field, value in flags.items():
-                setattr(user, field, value)
-            user.save()
+        user.email = email
+        user.is_active = True
+        for field, value in flags.items():
+            setattr(user, field, value)
+        user.set_password(password)
+        user.save()
         return user
 
     def _course(self, author, title, description, status, cover_image_url=""):
-        course, _ = Course.objects.get_or_create(
-            title=title,
-            author=author,
-            defaults={"description": description, "status": status, "cover_image_url": cover_image_url},
-        )
-        if course.status != status:
-            course.status = status
-            course.save()
+        course = Course.objects.create(author=author, title=title, description=description, status=status, cover_image_url=cover_image_url)
         return course
 
-    def _material(self, **kwargs):
-        material, _ = CourseMaterial.objects.get_or_create(
-            course=kwargs["course"],
-            title=kwargs["title"],
-            defaults=kwargs,
-        )
-        return material
+    def _material(self, course, title, material_type, order, **fields):
+        return CourseMaterial.objects.create(course=course, title=title, material_type=material_type, order=order, **fields)
 
     def _test(self, course, title, description, passing_score):
-        test, _ = Test.objects.get_or_create(
-            course=course,
-            title=title,
-            defaults={"description": description, "passing_score": passing_score},
-        )
-        return test
+        return Test.objects.create(course=course, title=title, description=description, passing_score=passing_score)
 
     def _question(self, test, text, order):
-        question, _ = Question.objects.get_or_create(test=test, text=text, defaults={"order": order})
-        return question
+        return Question.objects.create(test=test, text=text, order=order)
 
     def _answer(self, question, text, is_correct):
-        answer, _ = AnswerOption.objects.get_or_create(question=question, text=text, defaults={"is_correct": is_correct})
-        return answer
+        return AnswerOption.objects.create(question=question, text=text, is_correct=is_correct)

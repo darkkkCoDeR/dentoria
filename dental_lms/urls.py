@@ -6,6 +6,7 @@ from .views import DentoriaLoginView
 
 urlpatterns = [
     path('', views.home, name='home'),
+    path('set-theme/', views.set_theme, name='set_theme'),
     path('accounts/register/', views.register, name='register'),
     path('accounts/login/', DentoriaLoginView.as_view(), name='login'),
     path('accounts/logout/', LogoutView.as_view(), name='logout'),

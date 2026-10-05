@@ -1,0 +1,14 @@
+<form method="get" class="filter-panel p-3 mb-4">
+  <div class="row g-3 align-items-end">
+    {% for field in filter_form %}
+      <div class="col-md">
+        <label class="form-label small-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+      </div>
+    {% endfor %}
+    <div class="col-md-auto d-flex gap-2">
+      <button class="btn btn-primary" type="submit">Застосувати</button>
+      <a class="btn btn-outline-secondary" href="{{ request.path }}">Скинути</a>
+    </div>
+  </div>
+</form>

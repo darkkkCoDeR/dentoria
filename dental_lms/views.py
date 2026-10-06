@@ -5,6 +5,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.views import LoginView
+from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.mail import send_mail
 from django.db.models import Avg, Count, F, Max, Q, Value
 from django.db.models.functions import Coalesce
@@ -16,6 +17,7 @@ from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from django.views.decorators.http import require_POST
 
+from .cloudinary_utils import upload_to_cloudinary
 from .forms import (
     CalendarEventFilterForm,
     CalendarEventForm,
@@ -46,6 +48,22 @@ from .models import (
     TestAttempt,
     UserPost,
 )
+
+
+def handle_upload(form, field_name, folder, resource_type='auto'):
+    uploaded_file = form.cleaned_data.get(field_name)
+    if not uploaded_file:
+        return ''
+    return upload_to_cloudinary(uploaded_file, folder=folder, resource_type=resource_type)
+
+
+def add_upload_error(form, exc):
+    if isinstance(exc, ImproperlyConfigured):
+        form.add_error(None, 'Cloudinary не налаштований. Заповніть CLOUDINARY_* змінні в env.')
+    elif isinstance(exc, ValidationError):
+        form.add_error(None, exc)
+    else:
+        form.add_error(None, f'Не вдалося завантажити файл у Cloudinary: {exc}')
 
 
 def get_current_theme(request):
@@ -173,11 +191,20 @@ def profile(request):
 def profile_edit(request):
     profile_obj = request.user.profile
     if request.method == 'POST':
-        form = ProfileForm(request.POST, instance=profile_obj, user=request.user)
+        form = ProfileForm(request.POST, request.FILES, instance=profile_obj, user=request.user)
         if form.is_valid():
-            form.save()
-            messages.success(request, 'Профіль оновлено.')
-            return redirect('profile')
+            try:
+                avatar_url = handle_upload(form, 'avatar_upload', 'dentoria/avatars', 'image')
+            except Exception as exc:
+                add_upload_error(form, exc)
+            else:
+                profile = form.save(commit=False)
+                if avatar_url:
+                    profile.avatar_url = avatar_url
+                form.user.save()
+                profile.save()
+                messages.success(request, 'Профіль оновлено.')
+                return redirect('profile')
     else:
         form = ProfileForm(instance=profile_obj, user=request.user)
     return render(request, 'accounts/profile_edit.html', {'form': form})
@@ -220,14 +247,21 @@ def course_edit(request, slug):
 
 def save_course(request, course=None):
     if request.method == 'POST':
-        form = CourseForm(request.POST, instance=course)
+        form = CourseForm(request.POST, request.FILES, instance=course)
         if form.is_valid():
-            course_obj = form.save(commit=False)
-            if course_obj.pk is None:
-                course_obj.author = request.user
-            course_obj.save()
-            messages.success(request, 'Курс збережено.')
-            return redirect('course_detail', slug=course_obj.slug)
+            try:
+                cover_url = handle_upload(form, 'cover_image_upload', 'dentoria/course-covers', 'image')
+            except Exception as exc:
+                add_upload_error(form, exc)
+            else:
+                course_obj = form.save(commit=False)
+                if course_obj.pk is None:
+                    course_obj.author = request.user
+                if cover_url:
+                    course_obj.cover_image_url = cover_url
+                course_obj.save()
+                messages.success(request, 'Курс збережено.')
+                return redirect('course_detail', slug=course_obj.slug)
     else:
         form = CourseForm(instance=course)
     return render(request, 'courses/course_form.html', {'form': form, 'course': course})
@@ -264,13 +298,28 @@ def course_publish(request, slug):
 def material_add(request, slug):
     course = get_course_for_owner(request, slug)
     if request.method == 'POST':
-        form = CourseMaterialForm(request.POST)
+        form = CourseMaterialForm(request.POST, request.FILES)
         if form.is_valid():
-            material = form.save(commit=False)
-            material.course = course
-            material.save()
-            messages.success(request, 'Матеріал додано.')
-            return redirect('course_detail', slug=course.slug)
+            try:
+                file_url = handle_upload(form, 'file_upload', 'dentoria/material-files', 'auto')
+                image_url = handle_upload(form, 'image_upload', 'dentoria/material-images', 'image')
+            except Exception as exc:
+                add_upload_error(form, exc)
+            else:
+                material = form.save(commit=False)
+                material.course = course
+                if file_url:
+                    material.file_url = file_url
+                if image_url:
+                    material.image_url = image_url
+                try:
+                    material.full_clean()
+                except ValidationError as exc:
+                    add_upload_error(form, exc)
+                    return render(request, 'courses/material_form.html', {'form': form, 'course': course})
+                material.save()
+                messages.success(request, 'Матеріал додано.')
+                return redirect('course_detail', slug=course.slug)
     else:
         form = CourseMaterialForm()
     return render(request, 'courses/material_form.html', {'form': form, 'course': course})
@@ -438,14 +487,21 @@ def internship_edit(request, pk):
 
 def save_internship(request, post=None):
     if request.method == 'POST':
-        form = InternshipPostForm(request.POST, instance=post)
+        form = InternshipPostForm(request.POST, request.FILES, instance=post)
         if form.is_valid():
-            obj = form.save(commit=False)
-            if obj.pk is None:
-                obj.author = request.user
-            obj.save()
-            messages.success(request, 'Пост збережено.')
-            return redirect('internship_detail', pk=obj.pk)
+            try:
+                image_url = handle_upload(form, 'image_upload', 'dentoria/internship-posts', 'image')
+            except Exception as exc:
+                add_upload_error(form, exc)
+            else:
+                obj = form.save(commit=False)
+                if obj.pk is None:
+                    obj.author = request.user
+                if image_url:
+                    obj.image_url = image_url
+                obj.save()
+                messages.success(request, 'Пост збережено.')
+                return redirect('internship_detail', pk=obj.pk)
     else:
         form = InternshipPostForm(instance=post)
     return render(request, 'internship/post_form.html', {'form': form, 'post': post})
@@ -494,14 +550,21 @@ def post_edit(request, pk):
 
 def save_post(request, post=None):
     if request.method == 'POST':
-        form = UserPostForm(request.POST, instance=post)
+        form = UserPostForm(request.POST, request.FILES, instance=post)
         if form.is_valid():
-            obj = form.save(commit=False)
-            if obj.pk is None:
-                obj.author = request.user
-            obj.save()
-            messages.success(request, 'Пост збережено.')
-            return redirect('post_detail', pk=obj.pk)
+            try:
+                image_url = handle_upload(form, 'image_upload', 'dentoria/user-posts', 'image')
+            except Exception as exc:
+                add_upload_error(form, exc)
+            else:
+                obj = form.save(commit=False)
+                if obj.pk is None:
+                    obj.author = request.user
+                if image_url:
+                    obj.image_url = image_url
+                obj.save()
+                messages.success(request, 'Пост збережено.')
+                return redirect('post_detail', pk=obj.pk)
     else:
         form = UserPostForm(instance=post)
     return render(request, 'posts/post_form.html', {'form': form, 'post': post})

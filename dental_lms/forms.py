@@ -22,6 +22,8 @@ class BootstrapFormMixin:
     def _apply_bootstrap(self):
         for field in self.fields.values():
             css_class = 'form-check-input' if isinstance(field.widget, forms.CheckboxInput) else 'form-control'
+            if isinstance(field.widget, forms.FileInput):
+                css_class = 'form-control'
             if isinstance(field.widget, forms.Select):
                 css_class = 'form-select'
             existing = field.widget.attrs.get('class', '')
@@ -49,6 +51,7 @@ class RegisterForm(BootstrapFormMixin, UserCreationForm):
 
 
 class ProfileForm(BootstrapFormMixin, forms.ModelForm):
+    avatar_upload = forms.ImageField(label='Завантажити аватар', required=False)
     first_name = forms.CharField(label="Ім'я", required=False)
     last_name = forms.CharField(label='Прізвище', required=False)
     email = forms.EmailField(label='Email')
@@ -57,7 +60,7 @@ class ProfileForm(BootstrapFormMixin, forms.ModelForm):
         model = Profile
         fields = ['avatar_url', 'bio', 'specialization', 'theme']
         labels = {
-            'avatar_url': 'Cloudinary URL аватара',
+            'avatar_url': 'Cloudinary URL аватара або буде заповнений після upload',
             'bio': 'Про себе',
             'specialization': 'Спеціалізація',
             'theme': 'Тема',
@@ -89,6 +92,8 @@ class ProfileForm(BootstrapFormMixin, forms.ModelForm):
 
 
 class CourseForm(BootstrapFormMixin, forms.ModelForm):
+    cover_image_upload = forms.ImageField(label='Завантажити обкладинку', required=False)
+
     class Meta:
         model = Course
         fields = ['title', 'description', 'cover_image_url', 'status']
@@ -99,6 +104,9 @@ class CourseForm(BootstrapFormMixin, forms.ModelForm):
 
 
 class CourseMaterialForm(BootstrapFormMixin, forms.ModelForm):
+    file_upload = forms.FileField(label='Завантажити файл', required=False)
+    image_upload = forms.ImageField(label='Завантажити зображення', required=False)
+
     class Meta:
         model = CourseMaterial
         fields = ['title', 'material_type', 'text_content', 'file_url', 'image_url', 'external_url', 'order']
@@ -154,6 +162,8 @@ class JobVacancyForm(BootstrapFormMixin, forms.ModelForm):
 
 
 class InternshipPostForm(BootstrapFormMixin, forms.ModelForm):
+    image_upload = forms.ImageField(label='Завантажити зображення', required=False)
+
     class Meta:
         model = InternshipPost
         fields = ['title', 'content', 'image_url']
@@ -164,6 +174,8 @@ class InternshipPostForm(BootstrapFormMixin, forms.ModelForm):
 
 
 class UserPostForm(BootstrapFormMixin, forms.ModelForm):
+    image_upload = forms.ImageField(label='Завантажити зображення', required=False)
+
     class Meta:
         model = UserPost
         fields = ['title', 'content', 'image_url']

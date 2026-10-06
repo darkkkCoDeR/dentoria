@@ -29,9 +29,9 @@ Dentoria — навчальна платформа для стоматологі
 - HTML
 - Bootstrap 5
 - PostgreSQL
-- Cloudinary або інший зовнішній storage для файлів/зображень через URL-поля
+- Cloudinary
 
-Файли та картинки не зберігаються в PostgreSQL як binary. У базі зберігаються тільки URL, наприклад `cover_image_url`, `image_url`, `file_url`, `avatar_url`.
+Файли та картинки завантажуються користувачем через Django-форми, відправляються у Cloudinary, а в PostgreSQL зберігаються тільки отримані URL, наприклад `cover_image_url`, `image_url`, `file_url`, `avatar_url`.
 
 ## Швидкий локальний запуск
 
@@ -121,11 +121,16 @@ EMAIL_USE_TLS=True
 DEFAULT_FROM_EMAIL=Dentoria <noreply@example.com>
 ```
 
-## Cloudinary
+## Cloudinary uploads
 
-Для зберігання картинок і файлів можна використовувати Cloudinary Free Plan. У цьому проєкті завантаження реалізоване як збереження готових URL у формах.
+Dentoria підтримує завантаження файлів і зображень через сайт:
 
-Потрібні env-змінні для майбутньої інтеграції API:
+1. Користувач вибирає файл у Django-формі.
+2. View відправляє файл у Cloudinary через Cloudinary SDK.
+3. Cloudinary повертає `secure_url`.
+4. У PostgreSQL записується тільки URL.
+
+Потрібні env-змінні:
 
 ```env
 CLOUDINARY_CLOUD_NAME=your-cloud-name
@@ -133,12 +138,16 @@ CLOUDINARY_API_KEY=your-api-key
 CLOUDINARY_API_SECRET=your-api-secret
 ```
 
-У формах достатньо вставити Cloudinary URL у відповідне поле:
+Upload підтримується для:
 
-- `avatar_url`
-- `cover_image_url`
-- `image_url`
-- `file_url`
+- аватарки профілю → `avatar_url`;
+- обкладинки курсу → `cover_image_url`;
+- файлів матеріалів курсу → `file_url`;
+- зображень матеріалів курсу → `image_url`;
+- зображень постів інтернатури → `image_url`;
+- зображень загальних постів → `image_url`.
+
+URL-поля залишені як fallback: якщо файл уже є у Cloudinary або іншому storage, можна вставити готове посилання вручну.
 
 ## Перевірки
 

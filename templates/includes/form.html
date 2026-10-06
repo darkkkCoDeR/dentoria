@@ -1,4 +1,4 @@
-<form method="post" class="card card-body shadow-sm">
+<form method="post" enctype="multipart/form-data" class="card card-body shadow-sm">
   {% csrf_token %}
   {{ form.non_field_errors }}
   {% for field in form %}

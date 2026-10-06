@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1050" viewBox="0 0 1400 1050" role="img" aria-labelledby="title desc">
+  <title id="title">Dentoria LMS model relationship diagram</title>
+  <desc id="desc">Entity relationship diagram for Dentoria Django models and their foreign key links.</desc>
+  <defs>
+    <style>
+      .bg{fill:#fff7ed}.panel{fill:#fff;stroke:#fed7aa;stroke-width:2;filter:url(#shadow)}.core{fill:#ffedd5;stroke:#fb923c;stroke-width:2}.title{font:700 18px Arial, sans-serif;fill:#9a3412}.field{font:13px Arial, sans-serif;fill:#374151}.small{font:12px Arial, sans-serif;fill:#6b7280}.link{stroke:#ea580c;stroke-width:2;fill:none;marker-end:url(#arrow)}.link2{stroke:#64748b;stroke-width:1.8;fill:none;marker-end:url(#arrow2)}.badge{fill:#f97316}.badgeText{font:700 12px Arial, sans-serif;fill:white}.heading{font:800 34px Arial, sans-serif;fill:#9a3412}.subtitle{font:15px Arial, sans-serif;fill:#6b7280}
+    </style>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#7c2d12" flood-opacity="0.12"/></filter>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#ea580c"/></marker>
+    <marker id="arrow2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#64748b"/></marker>
+  </defs>
+  <rect class="bg" width="1400" height="1050" rx="28"/>
+  <text x="60" y="60" class="heading">Dentoria LMS — схема моделей і звʼязків</text>
+  <text x="60" y="88" class="subtitle">PostgreSQL зберігає дані та Cloudinary URL; файли фізично зберігаються у Cloudinary.</text>
+
+  <g id="user">
+    <rect x="560" y="125" width="280" height="145" rx="18" class="core"/>
+    <text x="585" y="158" class="title">User</text><rect x="760" y="138" width="54" height="22" rx="11" class="badge"/><text x="774" y="154" class="badgeText">auth</text>
+    <text x="585" y="186" class="field">id PK</text><text x="585" y="208" class="field">username, email, password</text><text x="585" y="230" class="field">is_active, is_staff</text><text x="585" y="252" class="field">date_joined, last_login</text>
+  </g>
+
+  <g id="profile"><rect x="60" y="150" width="310" height="150" rx="18" class="panel"/><text x="85" y="183" class="title">Profile</text><text x="85" y="212" class="field">user FK one-to-one</text><text x="85" y="234" class="field">avatar_url, bio</text><text x="85" y="256" class="field">specialization, theme</text><text x="85" y="278" class="field">created_at, updated_at</text></g>
+  <g id="course"><rect x="535" y="355" width="330" height="175" rx="18" class="core"/><text x="560" y="388" class="title">Course</text><text x="560" y="417" class="field">author FK → User</text><text x="560" y="439" class="field">title, slug, description</text><text x="560" y="461" class="field">cover_image_url</text><text x="560" y="483" class="field">status: draft/published/archived</text><text x="560" y="505" class="field">published_at, timestamps</text></g>
+  <g id="material"><rect x="60" y="400" width="350" height="175" rx="18" class="panel"/><text x="85" y="433" class="title">CourseMaterial</text><text x="85" y="462" class="field">course FK → Course</text><text x="85" y="484" class="field">material_type: text/file/image/link/video</text><text x="85" y="506" class="field">text_content, file_url, image_url</text><text x="85" y="528" class="field">external_url, order</text></g>
+  <g id="test"><rect x="1010" y="360" width="300" height="130" rx="18" class="panel"/><text x="1035" y="393" class="title">Test</text><text x="1035" y="422" class="field">course FK → Course</text><text x="1035" y="444" class="field">title, description</text><text x="1035" y="466" class="field">passing_score</text></g>
+  <g id="question"><rect x="1010" y="565" width="300" height="115" rx="18" class="panel"/><text x="1035" y="598" class="title">Question</text><text x="1035" y="627" class="field">test FK → Test</text><text x="1035" y="649" class="field">text, order</text></g>
+  <g id="answer"><rect x="1010" y="755" width="300" height="115" rx="18" class="panel"/><text x="1035" y="788" class="title">AnswerOption</text><text x="1035" y="817" class="field">question FK → Question</text><text x="1035" y="839" class="field">text, is_correct</text></g>
+  <g id="attempt"><rect x="535" y="790" width="330" height="145" rx="18" class="panel"/><text x="560" y="823" class="title">TestAttempt</text><text x="560" y="852" class="field">user FK → User</text><text x="560" y="874" class="field">test FK → Test</text><text x="560" y="896" class="field">score, max_score, passed</text><text x="560" y="918" class="field">started_at, finished_at</text></g>
+  <g id="enroll"><rect x="60" y="650" width="350" height="135" rx="18" class="panel"/><text x="85" y="683" class="title">CourseEnrollment</text><text x="85" y="712" class="field">user FK → User</text><text x="85" y="734" class="field">course FK → Course</text><text x="85" y="756" class="field">progress, status, completed_at</text></g>
+  <g id="matprogress"><rect x="60" y="830" width="350" height="115" rx="18" class="panel"/><text x="85" y="863" class="title">MaterialProgress</text><text x="85" y="892" class="field">user FK → User</text><text x="85" y="914" class="field">material FK → CourseMaterial</text><text x="85" y="936" class="field">is_completed, completed_at</text></g>
+
+  <g id="jobs"><rect x="930" y="125" width="340" height="150" rx="18" class="panel"/><text x="955" y="158" class="title">JobVacancy</text><text x="955" y="187" class="field">author FK → User</text><text x="955" y="209" class="field">title, clinic_name, city</text><text x="955" y="231" class="field">descriptions, requirements</text><text x="955" y="253" class="field">contact_info, is_active</text></g>
+  <g id="intern"><rect x="930" y="930" width="340" height="95" rx="18" class="panel"/><text x="955" y="963" class="title">InternshipPost</text><text x="955" y="992" class="field">author FK → User · title, content, image_url</text></g>
+  <g id="vote"><rect x="1030" y="900" width="260" height="0" rx="0" fill="none"/></g>
+  <g id="uspost"><rect x="535" y="970" width="330" height="60" rx="18" class="panel"/><text x="560" y="1005" class="title">UserPost</text><text x="690" y="1005" class="field">author FK, title, content, image_url</text></g>
+  <g id="calendar"><rect x="60" y="980" width="350" height="55" rx="18" class="panel"/><text x="85" y="1014" class="title">CalendarEvent</text><text x="245" y="1014" class="field">author FK, related_course FK, dates, visibility</text></g>
+
+  <g id="voteBox"><rect x="930" y="720" width="340" height="105" rx="18" class="panel"/><text x="955" y="753" class="title">InternshipVote</text><text x="955" y="782" class="field">post FK → InternshipPost</text><text x="955" y="804" class="field">user FK → User · vote_type</text></g>
+  <g id="comment"><rect x="930" y="835" width="340" height="75" rx="18" class="panel"/><text x="955" y="868" class="title">Comment</text><text x="955" y="895" class="field">author FK · post FK or internship_post FK</text></g>
+
+  <path class="link" d="M560 200 C480 205 440 215 370 225"/><text x="415" y="198" class="small">1:1</text>
+  <path class="link" d="M700 270 L700 355"/><text x="712" y="320" class="small">creates</text>
+  <path class="link" d="M930 195 L840 195"/><text x="858" y="185" class="small">author</text>
+  <path class="link2" d="M535 448 C485 448 465 470 410 488"/><text x="430" y="455" class="small">materials</text>
+  <path class="link2" d="M865 425 L1010 425"/><text x="910" y="413" class="small">tests</text>
+  <path class="link2" d="M1160 490 L1160 565"/><text x="1170" y="535" class="small">questions</text>
+  <path class="link2" d="M1160 680 L1160 755"/><text x="1170" y="725" class="small">answers</text>
+  <path class="link" d="M560 255 C415 330 330 530 235 650"/><text x="330" y="560" class="small">enrolls</text>
+  <path class="link2" d="M535 500 C430 555 330 615 235 650"/>
+  <path class="link" d="M560 255 C410 420 330 735 235 830"/><text x="315" y="810" class="small">progress</text>
+  <path class="link2" d="M235 575 L235 830"/>
+  <path class="link" d="M700 270 C700 480 700 640 700 790"/><text x="716" y="740" class="small">attempts</text>
+  <path class="link2" d="M1010 430 C940 520 850 705 765 790"/>
+  <path class="link" d="M840 235 C960 360 1110 610 1100 720"/><text x="1040" y="700" class="small">votes</text>
+  <path class="link2" d="M1100 930 L1100 825"/><text x="1115" y="885" class="small">post</text>
+  <path class="link" d="M840 245 C1010 465 1120 785 1100 835"/><text x="1080" y="855" class="small">comments</text>
+  <path class="link" d="M700 270 L700 970"/><text x="710" y="965" class="small">posts</text>
+  <path class="link" d="M560 240 C360 405 200 785 235 980"/><text x="255" y="970" class="small">events</text>
+  <path class="link2" d="M535 525 C430 690 335 875 260 980"/><text x="360" y="900" class="small">related course</text>
+</svg>

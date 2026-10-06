@@ -33,6 +33,192 @@ Dentoria — навчальна платформа для стоматологі
 
 Файли та картинки завантажуються користувачем через Django-форми, відправляються у Cloudinary, а в PostgreSQL зберігаються тільки отримані URL, наприклад `cover_image_url`, `image_url`, `file_url`, `avatar_url`.
 
+
+## Схема моделей і звʼязків
+
+```mermaid
+erDiagram
+    User ||--|| Profile : has
+    User ||--o{ Course : creates
+    User ||--o{ CourseEnrollment : enrolls
+    User ||--o{ MaterialProgress : completes
+    User ||--o{ TestAttempt : takes
+    User ||--o{ JobVacancy : publishes
+    User ||--o{ InternshipPost : writes
+    User ||--o{ InternshipVote : votes
+    User ||--o{ UserPost : writes
+    User ||--o{ CalendarEvent : creates
+    User ||--o{ Comment : writes
+
+    Course ||--o{ CourseMaterial : contains
+    Course ||--o{ Test : contains
+    Course ||--o{ CourseEnrollment : tracks
+    Course ||--o{ CalendarEvent : referenced_by
+
+    CourseMaterial ||--o{ MaterialProgress : tracked_by
+
+    Test ||--o{ Question : has
+    Test ||--o{ TestAttempt : attempted_by
+    Question ||--o{ AnswerOption : has
+
+    InternshipPost ||--o{ InternshipVote : receives
+    InternshipPost ||--o{ Comment : has
+    UserPost ||--o{ Comment : has
+
+    User {
+        bigint id PK
+        string username
+        string email
+        string password
+        boolean is_active
+        boolean is_staff
+        datetime date_joined
+    }
+
+    Profile {
+        bigint id PK
+        bigint user_id FK
+        string avatar_url
+        text bio
+        string specialization
+        string theme
+        datetime created_at
+        datetime updated_at
+    }
+
+    Course {
+        bigint id PK
+        bigint author_id FK
+        string title
+        string slug
+        text description
+        string cover_image_url
+        string status
+        datetime published_at
+        datetime created_at
+        datetime updated_at
+    }
+
+    CourseMaterial {
+        bigint id PK
+        bigint course_id FK
+        string title
+        string material_type
+        text text_content
+        string file_url
+        string image_url
+        string external_url
+        int order
+    }
+
+    CourseEnrollment {
+        bigint id PK
+        bigint user_id FK
+        bigint course_id FK
+        int progress
+        string status
+        datetime started_at
+        datetime completed_at
+    }
+
+    MaterialProgress {
+        bigint id PK
+        bigint user_id FK
+        bigint material_id FK
+        boolean is_completed
+        datetime completed_at
+    }
+
+    Test {
+        bigint id PK
+        bigint course_id FK
+        string title
+        text description
+        int passing_score
+    }
+
+    Question {
+        bigint id PK
+        bigint test_id FK
+        text text
+        int order
+    }
+
+    AnswerOption {
+        bigint id PK
+        bigint question_id FK
+        string text
+        boolean is_correct
+    }
+
+    TestAttempt {
+        bigint id PK
+        bigint user_id FK
+        bigint test_id FK
+        int score
+        int max_score
+        boolean passed
+        datetime started_at
+        datetime finished_at
+    }
+
+    JobVacancy {
+        bigint id PK
+        bigint author_id FK
+        string title
+        string clinic_name
+        string city
+        text short_description
+        text full_description
+        boolean is_active
+    }
+
+    InternshipPost {
+        bigint id PK
+        bigint author_id FK
+        string title
+        text content
+        string image_url
+    }
+
+    InternshipVote {
+        bigint id PK
+        bigint post_id FK
+        bigint user_id FK
+        string vote_type
+        datetime created_at
+    }
+
+    UserPost {
+        bigint id PK
+        bigint author_id FK
+        string title
+        text content
+        string image_url
+    }
+
+    CalendarEvent {
+        bigint id PK
+        bigint author_id FK
+        bigint related_course_id FK
+        string title
+        text description
+        string event_type
+        string external_url
+        datetime starts_at
+        datetime ends_at
+        boolean is_public
+    }
+
+    Comment {
+        bigint id PK
+        bigint author_id FK
+        bigint post_id FK
+        bigint internship_post_id FK
+        text content
+    }
+```
+
 ## Швидкий локальний запуск
 
 > Для швидкого локального запуску можна використати SQLite fallback через `USE_SQLITE_FOR_TESTS=1`.

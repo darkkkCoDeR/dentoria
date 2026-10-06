@@ -74,14 +74,32 @@ USE_SQLITE_FOR_TESTS=1 DJANGO_DEBUG=True DJANGO_SECRET_KEY=local-dev-key DJANGO_
 http://127.0.0.1:8000/
 ```
 
-## Demo акаунти
+## Користувачі за замовчуванням
 
-Після запуску `seed_demo_data` доступні акаунти:
+У проєкті немає hardcoded користувача в `settings.py` або міграціях. Тестові акаунти створюються тільки після запуску команди:
+
+```bash
+python manage.py seed_demo_data
+```
+
+Після цього доступні користувачі:
 
 ```text
 dentoria_editor / DemoPass123
 student_demo / DemoPass123
 admin_demo / DemoPass123
+```
+
+Ролі demo-користувачів:
+
+- `dentoria_editor` — редакційний staff-користувач, автор демо-курсів, постів, вакансій і подій.
+- `student_demo` — звичайний активований користувач для перевірки проходження курсів, тестів, теми й прогресу.
+- `admin_demo` — superuser для входу в Django admin.
+
+Адмін-панель доступна за адресою:
+
+```text
+/admin/
 ```
 
 ## Запуск з PostgreSQL

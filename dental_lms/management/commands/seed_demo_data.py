@@ -36,7 +36,7 @@ class Command(BaseCommand):
         editorial.save()
         editorial.profile.specialization = "Редакція стоматологічної освіти"
         editorial.profile.bio = "Єдиний редакційний акаунт для демо-постів, вакансій і подій Dentoria."
-        editorial.profile.avatar_url = "https://images.unsplash.com/photo-1606811971618-4486d14f3f99?q=80&w=900"
+        editorial.profile.avatar_url = "/static/img/dentoria-post.svg"
         editorial.profile.theme = "orange"
         editorial.profile.save()
 
@@ -51,21 +51,21 @@ class Command(BaseCommand):
                 "AI у стоматологічній діагностиці",
                 "Як безпечно використовувати ШІ для аналізу знімків, документації та клінічного triage без заміни лікарського рішення.",
                 Course.PUBLISHED,
-                "https://images.unsplash.com/photo-1581093458791-9d09f85a7b95?q=80&w=1200",
+                "/static/img/dentoria-ai-diagnostics.svg",
             ),
             self._course(
                 editorial,
                 "Профілактика карієсу та пародонтальних захворювань",
                 "Сучасний профілактичний підхід: оцінка ризиків, мотивація пацієнта, фториди, контроль біоплівки та recall-система.",
                 Course.PUBLISHED,
-                "https://images.unsplash.com/photo-1609840114035-3c981b782dfe?q=80&w=1200",
+                "/static/img/dentoria-prevention.svg",
             ),
             self._course(
                 editorial,
                 "Цифровий протокол ендодонтії",
                 "Практичний курс про діагностику, ізоляцію, робочу довжину, інструментацію, іригацію та якісну обтурацію.",
                 Course.PUBLISHED,
-                "https://images.unsplash.com/photo-1629909613654-28e377c37b09?q=80&w=1200",
+                "/static/img/dentoria-endo.svg",
             ),
             self._course(
                 editorial,
@@ -80,7 +80,7 @@ class Command(BaseCommand):
             self._material(course, "Клінічний конспект", "text", index, text_content=f"Ключові принципи теми: {course.title}. Додайте нотатки, клінічні приклади та алгоритми прийняття рішень.")
             self._material(course, "Додатковий матеріал", "link", index + 10, external_url="https://www.who.int/health-topics/oral-health")
             if course.status == Course.PUBLISHED:
-                self._material(course, "Ілюстрація протоколу", "image", index + 20, image_url=course.cover_image_url or "https://images.unsplash.com/photo-1606811971618-4486d14f3f99?q=80&w=1200")
+                self._material(course, "Ілюстрація протоколу", "image", index + 20, image_url=course.cover_image_url or "/static/img/dentoria-post.svg")
                 test = self._test(course, f"Тест: {course.title}", "Швидка перевірка розуміння матеріалу.", 60)
                 question = self._question(test, "Який підхід найкраще відповідає сучасній доказовій стоматології?", 1)
                 self._answer(question, "Оцінка ризиків, документація та персоналізований план", True)
@@ -142,7 +142,7 @@ class Command(BaseCommand):
             ("Телестоматологія: коли онлайн-консультація доречна", "Попередній triage, контроль після втручання та навчання гігієні можуть працювати онлайн, але діагноз і лікування часто потребують очного огляду."),
         ]
         for index, (title, content) in enumerate(internship_posts):
-            post = InternshipPost.objects.create(author=editorial, title=title, content=content, image_url="https://images.unsplash.com/photo-1606811971618-4486d14f3f99?q=80&w=1200" if index == 0 else "")
+            post = InternshipPost.objects.create(author=editorial, title=title, content=content, image_url="/static/img/dentoria-post.svg")
             InternshipVote.objects.update_or_create(post=post, user=student, defaults={"vote_type": InternshipVote.PLUS})
 
         user_posts = [
@@ -156,7 +156,7 @@ class Command(BaseCommand):
                 author=editorial,
                 title=title,
                 content=content,
-                image_url="https://images.unsplash.com/photo-1609840114035-3c981b782dfe?q=80&w=1200" if index % 2 == 0 else "",
+                image_url="/static/img/dentoria-post.svg",
             )
 
         now = timezone.now()

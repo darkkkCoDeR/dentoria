@@ -22,13 +22,27 @@ from dental_lms.models import (
 class Command(BaseCommand):
     help = "Create modern Dentoria demo content for local manual testing."
 
-    def handle(self, *args, **options):
-        demo_password = "DemoPass123"
-        editorial = self._user("dentoria_editor", "editor@dentoria.test", demo_password, is_staff=True)
-        student = self._user("student_demo", "student@dentoria.test", demo_password)
-        admin = self._user("admin_demo", "admin@dentoria.test", demo_password, is_staff=True, is_superuser=True)
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--production-safe",
+            action="store_true",
+            help="Create content with a disabled author account and no demo login credentials.",
+        )
 
-        demo_users = User.objects.filter(username__in=["dentoria_editor", "student_demo", "admin_demo", "teacher_demo", "intern_demo"])
+    def handle(self, *args, **options):
+        production_safe = options["production_safe"]
+        if production_safe:
+            editorial = self._content_author()
+            student = None
+            demo_users = User.objects.filter(username="dentoria_content")
+        else:
+            demo_password = "DemoPass123"
+            editorial = self._user("dentoria_editor", "editor@dentoria.test", demo_password, is_staff=True)
+            student = self._user("student_demo", "student@dentoria.test", demo_password)
+            self._user("admin_demo", "admin@dentoria.test", demo_password, is_staff=True, is_superuser=True)
+            demo_users = User.objects.filter(
+                username__in=["dentoria_editor", "student_demo", "admin_demo", "teacher_demo", "intern_demo"]
+            )
         self._clear_demo_content(demo_users)
 
         editorial.first_name = "Dentoria"
@@ -40,10 +54,11 @@ class Command(BaseCommand):
         editorial.profile.theme = "orange"
         editorial.profile.save()
 
-        student.profile.specialization = "Студент стоматології"
-        student.profile.bio = "Тестовий студент для перевірки прогресу, тем і проходження курсів."
-        student.profile.theme = "light"
-        student.profile.save()
+        if student:
+            student.profile.specialization = "Студент стоматології"
+            student.profile.bio = "Тестовий студент для перевірки прогресу, тем і проходження курсів."
+            student.profile.theme = "light"
+            student.profile.save()
 
         courses = [
             self._course(
@@ -86,20 +101,25 @@ class Command(BaseCommand):
                 self._answer(question, "Оцінка ризиків, документація та персоналізований план", True)
                 self._answer(question, "Однаковий план лікування для всіх пацієнтів", False)
 
-        main_course = courses[0]
-        enrollment, _ = CourseEnrollment.objects.get_or_create(user=student, course=main_course)
-        completed = main_course.materials.first()
-        if completed:
-            MaterialProgress.objects.update_or_create(
-                user=student,
-                material=completed,
-                defaults={"is_completed": True, "completed_at": timezone.now()},
-            )
-        enrollment.progress = 33
-        enrollment.save()
-        first_test = main_course.tests.first()
-        if first_test:
-            TestAttempt.objects.get_or_create(user=student, test=first_test, defaults={"score": 82, "max_score": 100, "passed": True})
+        if student:
+            main_course = courses[0]
+            enrollment, _ = CourseEnrollment.objects.get_or_create(user=student, course=main_course)
+            completed = main_course.materials.first()
+            if completed:
+                MaterialProgress.objects.update_or_create(
+                    user=student,
+                    material=completed,
+                    defaults={"is_completed": True, "completed_at": timezone.now()},
+                )
+            enrollment.progress = 33
+            enrollment.save()
+            first_test = main_course.tests.first()
+            if first_test:
+                TestAttempt.objects.get_or_create(
+                    user=student,
+                    test=first_test,
+                    defaults={"score": 82, "max_score": 100, "passed": True},
+                )
 
         for job in [
             {
@@ -143,7 +163,8 @@ class Command(BaseCommand):
         ]
         for index, (title, content) in enumerate(internship_posts):
             post = InternshipPost.objects.create(author=editorial, title=title, content=content, image_url="/static/img/dentoria-post.svg")
-            InternshipVote.objects.update_or_create(post=post, user=student, defaults={"vote_type": InternshipVote.PLUS})
+            if student:
+                InternshipVote.objects.update_or_create(post=post, user=student, defaults={"vote_type": InternshipVote.PLUS})
 
         user_posts = [
             ("AI в стоматології: що варто тестувати вже зараз", "Найбільш практичні сценарії для клініки: попередня розмітка знімків, пошук ризиків у документації, підготовка patient-friendly пояснень і контроль follow-up."),
@@ -180,10 +201,13 @@ class Command(BaseCommand):
             )
 
         self.stdout.write(self.style.SUCCESS("Modern demo data created."))
-        self.stdout.write("Users:")
-        self.stdout.write(f"  dentoria_editor / {demo_password}")
-        self.stdout.write(f"  student_demo / {demo_password}")
-        self.stdout.write(f"  admin_demo / {demo_password}")
+        if production_safe:
+            self.stdout.write("Production-safe content author created with an unusable password.")
+        else:
+            self.stdout.write("Users:")
+            self.stdout.write(f"  dentoria_editor / {demo_password}")
+            self.stdout.write(f"  student_demo / {demo_password}")
+            self.stdout.write(f"  admin_demo / {demo_password}")
 
     def _clear_demo_content(self, demo_users):
         Course.objects.filter(author__in=demo_users).delete()
@@ -199,6 +223,16 @@ class Command(BaseCommand):
         for field, value in flags.items():
             setattr(user, field, value)
         user.set_password(password)
+        user.save()
+        return user
+
+    def _content_author(self):
+        user, _ = User.objects.get_or_create(username="dentoria_content")
+        user.email = "content@dentoria.invalid"
+        user.is_active = False
+        user.is_staff = False
+        user.is_superuser = False
+        user.set_unusable_password()
         user.save()
         return user
 

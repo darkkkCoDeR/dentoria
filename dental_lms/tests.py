@@ -1,14 +1,48 @@
+from io import StringIO
 from unittest.mock import patch
 
 from django.core import mail
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
 from .forms import CalendarEventForm, CourseMaterialForm, LoginForm, RegisterForm
 from .models import CalendarEvent, Course, InternshipPost, InternshipVote, JobVacancy, UserPost
+
+
+class DentoriaSeedCommandTests(TestCase):
+    def test_production_safe_seed_creates_dental_content_without_login_account(self):
+        call_command('seed_demo_data', '--production-safe', stdout=StringIO())
+        call_command('seed_demo_data', '--production-safe', stdout=StringIO())
+
+        author = User.objects.get(username='dentoria_content')
+        self.assertFalse(author.is_active)
+        self.assertFalse(author.is_staff)
+        self.assertFalse(author.is_superuser)
+        self.assertFalse(author.has_usable_password())
+        self.assertFalse(User.objects.filter(username='admin_demo').exists())
+        self.assertEqual(Course.objects.filter(author=author).count(), 4)
+        self.assertEqual(JobVacancy.objects.filter(author=author).count(), 3)
+        self.assertEqual(InternshipPost.objects.filter(author=author).count(), 3)
+        self.assertEqual(UserPost.objects.filter(author=author).count(), 4)
+        self.assertEqual(CalendarEvent.objects.filter(author=author).count(), 4)
+        self.assertEqual(
+            Course.objects.filter(
+                author=author,
+                cover_image_url__startswith='/static/img/dentoria-',
+            ).count(),
+            3,
+        )
+        self.assertEqual(
+            UserPost.objects.filter(
+                author=author,
+                image_url='/static/img/dentoria-post.svg',
+            ).count(),
+            4,
+        )
 
 
 class DentoriaModelTests(TestCase):

@@ -1,5 +1,7 @@
 # Dentoria LMS
 
+https://dentoria.onrender.com/
+
 Dentoria — навчальна платформа для стоматологічної спільноти, написана на класичному Django з серверним рендерингом HTML-шаблонів і Bootstrap-дизайном.
 
 ## Можливості

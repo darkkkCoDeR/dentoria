@@ -1,6 +1,9 @@
+from unittest.mock import patch
+
+from django.core import mail
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -78,6 +81,36 @@ class DentoriaViewTests(TestCase):
         response = self.client.get(reverse('register'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '>Створити акаунт</button>')
+
+    @override_settings(
+        SITE_URL='https://dentoria.onrender.com',
+        EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+    )
+    def test_activation_email_uses_configured_site_url(self):
+        response = self.client.post(reverse('register'), {
+            'username': 'site-url-user',
+            'email': 'site-url-user@example.com',
+            'password1': 'StrongPass123',
+            'password2': 'StrongPass123',
+        })
+
+        self.assertRedirects(response, reverse('login'))
+        self.assertIn('https://dentoria.onrender.com/accounts/activate/', mail.outbox[0].body)
+        self.assertNotIn('127.0.0.1', mail.outbox[0].body)
+
+    @patch('dental_lms.views.send_activation_email', side_effect=OSError('Network is unreachable'))
+    def test_register_handles_activation_email_network_error(self, _send_activation_email):
+        with self.assertLogs('dental_lms.views', level='ERROR'):
+            response = self.client.post(reverse('register'), {
+                'username': 'new-user',
+                'email': 'new-user@example.com',
+                'password1': 'StrongPass123',
+                'password2': 'StrongPass123',
+            })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Не вдалося надіслати лист активації.')
+        self.assertFalse(User.objects.filter(username='new-user').exists())
 
     def test_authenticated_user_can_open_home(self):
         self.client.login(username='active', password='pass12345')

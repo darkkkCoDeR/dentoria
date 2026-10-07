@@ -1,3 +1,7 @@
+import logging
+import smtplib
+
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
@@ -6,7 +10,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.views import LoginView
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.mail import send_mail
-from django.db import connection
+from django.db import connection, transaction
 from django.db.models import Avg, Count, F, Max, Q, Value
 from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404, redirect, render
@@ -50,6 +54,9 @@ from .models import (
     TestAttempt,
     UserPost,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 def handle_upload(form, field_name, folder, resource_type='auto'):
@@ -122,7 +129,12 @@ class DentoriaLoginView(LoginView):
 def send_activation_email(request, user):
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     token = default_token_generator.make_token(user)
-    activation_url = request.build_absolute_uri(reverse('activate', args=[uid, token]))
+    activation_path = reverse('activate', args=[uid, token])
+    activation_url = (
+        f'{settings.SITE_URL}{activation_path}'
+        if settings.SITE_URL
+        else request.build_absolute_uri(activation_path)
+    )
     send_mail(
         'Активація Dentoria',
         f'Перейдіть за посиланням для активації акаунта: {activation_url}',
@@ -139,10 +151,19 @@ def register(request):
             user = form.save(commit=False)
             user.is_active = False
             user.email = form.cleaned_data['email']
-            user.save()
-            send_activation_email(request, user)
-            messages.success(request, 'Реєстрація успішна. Перевірте email для активації.')
-            return redirect('login')
+            try:
+                with transaction.atomic():
+                    user.save()
+                    send_activation_email(request, user)
+            except (OSError, smtplib.SMTPException):
+                logger.exception('Could not send an activation email')
+                form.add_error(
+                    None,
+                    'Не вдалося надіслати лист активації. Спробуйте зареєструватися пізніше.',
+                )
+            else:
+                messages.success(request, 'Реєстрація успішна. Перевірте email для активації.')
+                return redirect('login')
     else:
         form = RegisterForm()
     return render(request, 'accounts/register.html', {'form': form})

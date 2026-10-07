@@ -25,3 +25,51 @@ body.theme-orange{background:radial-gradient(circle at top left,#fed7aa 0,#fff7e
 .theme-switcher .form-select{min-width:130px;padding:.25rem 2rem .25rem .75rem}.stats-card{transition:.18s ease}.stats-card:hover,.content-card:hover{transform:translateY(-3px)}
 .section-title{font-weight:900}.content-card{transition:.18s ease;height:100%}.small-label{text-transform:uppercase;font-size:.72rem;font-weight:800;color:var(--dentoria-muted);letter-spacing:.08em}
 body.theme-dark .card,body.theme-dark .list-group-item,body.theme-dark .filter-panel,body.theme-dark .table{color:#f9fafb}body.theme-dark a{color:#fdba74}body.theme-dark .hero{background:linear-gradient(135deg,rgba(67,20,7,.95),rgba(17,24,39,.92))}
+
+/* Authentication */
+.auth-shell{display:grid;place-items:center;min-height:calc(100vh - 220px);padding:1rem 0 2rem}
+.auth-card{display:grid;grid-template-columns:minmax(300px,.9fr) minmax(420px,1.1fr);width:min(100%,1000px);overflow:hidden;border:1px solid var(--dentoria-border);border-radius:2rem;background:var(--dentoria-card);box-shadow:0 28px 80px rgba(124,45,18,.16);backdrop-filter:blur(18px)}
+.auth-aside{position:relative;display:flex;flex-direction:column;justify-content:center;min-height:590px;padding:3.5rem;color:#fff;background:linear-gradient(145deg,#9a3412 0%,#ea580c 50%,#fb923c 100%);isolation:isolate}
+.auth-aside:before,.auth-aside:after{position:absolute;z-index:-1;border-radius:50%;content:"";background:rgba(255,255,255,.1)}
+.auth-aside:before{top:-70px;right:-55px;width:230px;height:230px}
+.auth-aside:after{bottom:-90px;left:-70px;width:290px;height:290px}
+.auth-brand-mark,.auth-mobile-mark{display:grid;place-items:center;width:58px;height:58px;margin-bottom:1.8rem;border:1px solid rgba(255,255,255,.32);border-radius:18px;background:rgba(255,255,255,.16);font-size:1.75rem;box-shadow:0 16px 35px rgba(124,45,18,.22)}
+.auth-aside h1{max-width:440px;margin-bottom:1.25rem;font-size:clamp(2rem,3.2vw,3rem);font-weight:900;line-height:1.08;letter-spacing:-.045em}
+.auth-aside>p:not(.auth-eyebrow){max-width:430px;margin-bottom:1.8rem;color:rgba(255,255,255,.8);font-size:1.03rem;line-height:1.7}
+.auth-eyebrow{margin-bottom:.75rem;color:#c2410c;font-size:.75rem;font-weight:900;letter-spacing:.14em;text-transform:uppercase}
+.auth-aside .auth-eyebrow{color:#ffedd5}
+.auth-feature-list{display:flex;flex-wrap:wrap;gap:.65rem}
+.auth-feature-list span{padding:.5rem .8rem;border:1px solid rgba(255,255,255,.2);border-radius:999px;background:rgba(255,255,255,.09);font-size:.82rem;font-weight:700}
+.auth-form-panel{display:flex;flex-direction:column;justify-content:center;padding:3.5rem 4rem}
+.auth-heading{margin-bottom:1.8rem}
+.auth-heading h2{margin-bottom:.65rem;font-size:clamp(1.8rem,3vw,2.35rem);font-weight:900;letter-spacing:-.04em}
+.auth-heading>p:last-child{margin:0;color:var(--dentoria-muted)}
+.auth-mobile-mark{display:none;color:#fff;background:linear-gradient(145deg,#ea580c,#fb923c)}
+.auth-form{display:grid;gap:1.15rem}
+.auth-form .auth-field{margin:0}
+.auth-form .form-label{margin-bottom:.5rem;font-size:.88rem;font-weight:800}
+.auth-form .form-control{min-height:52px;padding:.8rem 1rem;border:1px solid rgba(148,163,184,.4);border-radius:1rem;background:rgba(255,255,255,.72)}
+.auth-form .form-control::placeholder{color:#9ca3af}
+.auth-form .form-text{font-size:.78rem;line-height:1.45}
+.auth-form .form-text ul{margin:.45rem 0 0;padding-left:1.1rem}
+.auth-submit{width:100%;min-height:52px;margin-top:.25rem;font-size:1rem}
+.auth-switch{margin:1.6rem 0 0;text-align:center;color:var(--dentoria-muted)}
+.auth-switch a{color:#ea580c;font-weight:800;text-decoration:none}
+.auth-switch a:hover{text-decoration:underline}
+.auth-shell-register .auth-card{width:min(100%,1080px)}
+.auth-shell-register .auth-form-panel{padding-top:2.5rem;padding-bottom:2.5rem}
+body.theme-dark .auth-form .form-control{color:#f9fafb;border-color:rgba(251,146,60,.25);background:rgba(15,23,42,.62)}
+body.theme-dark .auth-form .form-control::placeholder{color:#94a3b8}
+
+@media (max-width: 991.98px){
+  .auth-card{grid-template-columns:1fr;width:min(100%,620px)}
+  .auth-aside{display:none}
+  .auth-form-panel{padding:3rem}
+  .auth-mobile-mark{display:grid}
+}
+@media (max-width: 575.98px){
+  .auth-shell{display:block;min-height:0;padding:0}
+  .auth-card{border-radius:1.5rem}
+  .auth-form-panel{padding:2rem 1.25rem}
+  .auth-heading{margin-bottom:1.5rem}
+}

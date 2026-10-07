@@ -1,1 +1,46 @@
-{% extends 'base.html' %}{% block title %}Вхід · Dentoria{% endblock %}{% block content %}<h1>Вхід</h1>{% include 'includes/form.html' %}<p class="mt-3"><a href="{% url 'register' %}">Створити акаунт</a></p>{% endblock %}
+{% extends 'base.html' %}
+
+{% block title %}Вхід · Dentoria{% endblock %}
+
+{% block content %}
+<section class="auth-shell">
+  <div class="auth-card">
+    <div class="auth-aside">
+      <span class="auth-brand-mark" aria-hidden="true">🦷</span>
+      <p class="auth-eyebrow">Dentoria LMS</p>
+      <h1>Знання, які формують сучасну стоматологію</h1>
+      <p>Навчайтеся, стежте за прогресом і розвивайте професійні навички в одному просторі.</p>
+      <div class="auth-feature-list" aria-label="Переваги платформи">
+        <span>✓ Професійні курси</span>
+        <span>✓ Тести та прогрес</span>
+        <span>✓ Спільнота стоматологів</span>
+      </div>
+    </div>
+
+    <div class="auth-form-panel">
+      <div class="auth-heading">
+        <span class="auth-mobile-mark" aria-hidden="true">🦷</span>
+        <p class="auth-eyebrow">Раді бачити знову</p>
+        <h2>Увійдіть в акаунт</h2>
+        <p>Введіть свої дані, щоб продовжити навчання.</p>
+      </div>
+
+      <form method="post" class="auth-form">
+        {% csrf_token %}
+        {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger rounded-4" role="alert">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        {% for field in form %}
+          {% include 'includes/auth_field.html' with field=field %}
+        {% endfor %}
+
+        <button class="btn btn-primary auth-submit" type="submit">Увійти</button>
+      </form>
+
+      <p class="auth-switch">Ще не маєте акаунта? <a href="{% url 'register' %}">Зареєструватися</a></p>
+    </div>
+  </div>
+</section>
+{% endblock %}

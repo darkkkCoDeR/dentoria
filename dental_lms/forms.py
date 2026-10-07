@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.forms import modelformset_factory
@@ -30,6 +30,22 @@ class BootstrapFormMixin:
             field.widget.attrs['class'] = f'{existing} {css_class}'.strip()
 
 
+class LoginForm(BootstrapFormMixin, AuthenticationForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['username'].label = 'Логін'
+        self.fields['username'].widget.attrs.update({
+            'placeholder': 'Введіть логін',
+            'autocomplete': 'username',
+        })
+        self.fields['password'].label = 'Пароль'
+        self.fields['password'].widget.attrs.update({
+            'placeholder': 'Введіть пароль',
+            'autocomplete': 'current-password',
+        })
+        self._apply_bootstrap()
+
+
 class RegisterForm(BootstrapFormMixin, UserCreationForm):
     email = forms.EmailField(label='Email')
     first_name = forms.CharField(label="Ім'я", required=False)
@@ -41,6 +57,31 @@ class RegisterForm(BootstrapFormMixin, UserCreationForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['username'].label = 'Логін'
+        self.fields['username'].widget.attrs.update({
+            'placeholder': 'Оберіть логін',
+            'autocomplete': 'username',
+        })
+        self.fields['email'].widget.attrs.update({
+            'placeholder': 'name@example.com',
+            'autocomplete': 'email',
+        })
+        self.fields['first_name'].widget.attrs.update({
+            'placeholder': "Ваше ім'я",
+            'autocomplete': 'given-name',
+        })
+        self.fields['last_name'].widget.attrs.update({
+            'placeholder': 'Ваше прізвище',
+            'autocomplete': 'family-name',
+        })
+        self.fields['password1'].widget.attrs.update({
+            'placeholder': 'Створіть надійний пароль',
+            'autocomplete': 'new-password',
+        })
+        self.fields['password2'].widget.attrs.update({
+            'placeholder': 'Повторіть пароль',
+            'autocomplete': 'new-password',
+        })
         self._apply_bootstrap()
 
     def clean_email(self):
@@ -218,6 +259,10 @@ class SearchFilterForm(BootstrapFormMixin, forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._apply_bootstrap()
+
+
+class CourseCatalogFilterForm(SearchFilterForm):
+    pass
 
 
 class CourseFilterForm(SearchFilterForm):

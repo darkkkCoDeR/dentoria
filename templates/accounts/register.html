@@ -1,1 +1,49 @@
-{% extends 'base.html' %}{% block content %}<h1>Реєстрація</h1>{% include 'includes/form.html' %}{% endblock %}
+{% extends 'base.html' %}
+
+{% block title %}Реєстрація · Dentoria{% endblock %}
+
+{% block content %}
+<section class="auth-shell auth-shell-register">
+  <div class="auth-card">
+    <div class="auth-aside">
+      <span class="auth-brand-mark" aria-hidden="true">🦷</span>
+      <p class="auth-eyebrow">Приєднуйтеся до Dentoria</p>
+      <h1>Розвивайтеся разом зі стоматологічною спільнотою</h1>
+      <p>Створіть профіль, обирайте курси та зберігайте свої навчальні результати.</p>
+      <div class="auth-feature-list" aria-label="Переваги платформи">
+        <span>✓ Актуальні матеріали</span>
+        <span>✓ Особистий прогрес</span>
+        <span>✓ Події та вакансії</span>
+      </div>
+    </div>
+
+    <div class="auth-form-panel">
+      <div class="auth-heading">
+        <span class="auth-mobile-mark" aria-hidden="true">🦷</span>
+        <p class="auth-eyebrow">Почніть навчання</p>
+        <h2>Створити акаунт</h2>
+        <p>Заповніть дані — це займе лише кілька хвилин.</p>
+      </div>
+
+      <form method="post" class="auth-form">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger rounded-4" role="alert">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="row g-3">
+          {% for field in form %}
+            <div class="{% if field.name == 'first_name' or field.name == 'last_name' %}col-md-6{% else %}col-12{% endif %}">
+              {% include 'includes/auth_field.html' with field=field %}
+            </div>
+          {% endfor %}
+        </div>
+
+        <button class="btn btn-primary auth-submit" type="submit">Створити акаунт</button>
+      </form>
+
+      <p class="auth-switch">Вже маєте акаунт? <a href="{% url 'login' %}">Увійти</a></p>
+    </div>
+  </div>
+</section>
+{% endblock %}

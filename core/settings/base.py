@@ -3,9 +3,14 @@ import os
 from pathlib import Path
 from urllib.parse import urlparse
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+import certifi
+from dotenv import load_dotenv
 
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'unsafe-dev-key-change-me')
+BASE_DIR = Path(__file__).resolve().parents[2]
+load_dotenv(BASE_DIR / '.env')
+os.environ.setdefault('SSL_CERT_FILE', certifi.where())
+
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'replace-with-your-secret-key')
 DEBUG = os.environ.get('DJANGO_DEBUG', 'False').lower() in {'1', 'true', 'yes', 'on'}
 ALLOWED_HOSTS = [host.strip() for host in os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if host.strip()]
 CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',') if origin.strip()]
@@ -113,6 +118,7 @@ EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() in {'1', 'true', 'yes', 'on'}
+EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', '10'))
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'Dentoria <noreply@dentoria.local>')
 
 CLOUDINARY_CLOUD_NAME = os.environ.get('CLOUDINARY_CLOUD_NAME', '')

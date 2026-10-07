@@ -1,12 +1,12 @@
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.views import LoginView
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.mail import send_mail
+from django.db import connection
 from django.db.models import Avg, Count, F, Max, Q, Value
 from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404, redirect, render
@@ -22,6 +22,7 @@ from .forms import (
     CalendarEventFilterForm,
     CalendarEventForm,
     ContentFilterForm,
+    CourseCatalogFilterForm,
     CourseFilterForm,
     CourseForm,
     CourseMaterialForm,
@@ -29,6 +30,7 @@ from .forms import (
     InternshipPostForm,
     JobFilterForm,
     JobVacancyForm,
+    LoginForm,
     ProfileForm,
     RegisterForm,
     TestForm,
@@ -90,6 +92,14 @@ def set_theme(request):
 def apply_search(queryset, query, fields):
     if not query:
         return queryset
+    if connection.vendor == 'sqlite':
+        needle = query.casefold()
+        matching_ids = [
+            row[0]
+            for row in queryset.values_list('pk', *fields)
+            if any(needle in str(value or '').casefold() for value in row[1:])
+        ]
+        return queryset.filter(pk__in=matching_ids)
     condition = Q()
     for field in fields:
         condition |= Q(**{f'{field}__icontains': query})
@@ -106,7 +116,7 @@ def apply_common_sort(queryset, sort):
 
 class DentoriaLoginView(LoginView):
     template_name = 'accounts/login.html'
-    authentication_form = AuthenticationForm
+    authentication_form = LoginForm
 
 
 def send_activation_email(request, user):
@@ -212,7 +222,7 @@ def profile_edit(request):
 
 @active_required
 def course_list(request):
-    form = CourseFilterForm(request.GET or None)
+    form = CourseCatalogFilterForm(request.GET or None)
     courses = Course.objects.filter(status=Course.PUBLISHED).select_related('author')
     if form.is_valid():
         query = form.cleaned_data.get('q')
@@ -389,13 +399,11 @@ def job_list(request):
         active = form.cleaned_data.get('active')
         jobs = apply_search(jobs, query, ['title', 'clinic_name', 'city', 'short_description', 'full_description', 'requirements'])
         if city:
-            jobs = jobs.filter(city__icontains=city)
+            jobs = apply_search(jobs, city, ['city'])
         if active == 'active':
             jobs = jobs.filter(is_active=True)
         elif active == 'inactive':
             jobs = jobs.filter(is_active=False)
-        else:
-            jobs = jobs.filter(is_active=True)
         jobs = apply_common_sort(jobs, form.cleaned_data.get('sort'))
     else:
         jobs = jobs.filter(is_active=True).order_by('-created_at')

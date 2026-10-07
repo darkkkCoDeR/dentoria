@@ -211,6 +211,7 @@ DJANGO_DEBUG=False
 DJANGO_ALLOWED_HOSTS=your-service.onrender.com
 DJANGO_CSRF_TRUSTED_ORIGINS=https://your-service.onrender.com
 SITE_URL=https://your-service.onrender.com
+REQUIRE_EMAIL_ACTIVATION=False
 DJANGO_SECRET_KEY=generated-secret
 DATABASE_URL=render-postgres-connection-string
 EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend

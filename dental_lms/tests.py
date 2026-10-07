@@ -112,6 +112,20 @@ class DentoriaViewTests(TestCase):
         self.assertContains(response, 'Не вдалося надіслати лист активації.')
         self.assertFalse(User.objects.filter(username='new-user').exists())
 
+    @override_settings(REQUIRE_EMAIL_ACTIVATION=False)
+    @patch('dental_lms.views.send_activation_email')
+    def test_register_activates_user_without_email_in_demo_mode(self, send_activation_email):
+        response = self.client.post(reverse('register'), {
+            'username': 'demo-user',
+            'email': 'demo-user@example.com',
+            'password1': 'StrongPass123',
+            'password2': 'StrongPass123',
+        })
+
+        self.assertRedirects(response, reverse('login'))
+        self.assertTrue(User.objects.get(username='demo-user').is_active)
+        send_activation_email.assert_not_called()
+
     def test_authenticated_user_can_open_home(self):
         self.client.login(username='active', password='pass12345')
         response = self.client.get(reverse('home'))

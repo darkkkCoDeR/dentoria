@@ -15,6 +15,9 @@ DEBUG = os.environ.get('DJANGO_DEBUG', 'False').lower() in {'1', 'true', 'yes', 
 ALLOWED_HOSTS = [host.strip() for host in os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if host.strip()]
 CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',') if origin.strip()]
 SITE_URL = os.environ.get('SITE_URL', '').rstrip('/')
+REQUIRE_EMAIL_ACTIVATION = os.environ.get('REQUIRE_EMAIL_ACTIVATION', 'True').lower() in {
+    '1', 'true', 'yes', 'on',
+}
 
 INSTALLED_APPS = [
     'django.contrib.admin',

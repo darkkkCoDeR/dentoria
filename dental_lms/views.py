@@ -149,20 +149,25 @@ def register(request):
         form = RegisterForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
-            user.is_active = False
+            user.is_active = not settings.REQUIRE_EMAIL_ACTIVATION
             user.email = form.cleaned_data['email']
-            try:
-                with transaction.atomic():
-                    user.save()
-                    send_activation_email(request, user)
-            except (OSError, smtplib.SMTPException):
-                logger.exception('Could not send an activation email')
-                form.add_error(
-                    None,
-                    'Не вдалося надіслати лист активації. Спробуйте зареєструватися пізніше.',
-                )
+            if settings.REQUIRE_EMAIL_ACTIVATION:
+                try:
+                    with transaction.atomic():
+                        user.save()
+                        send_activation_email(request, user)
+                except (OSError, smtplib.SMTPException):
+                    logger.exception('Could not send an activation email')
+                    form.add_error(
+                        None,
+                        'Не вдалося надіслати лист активації. Спробуйте зареєструватися пізніше.',
+                    )
+                else:
+                    messages.success(request, 'Реєстрація успішна. Перевірте email для активації.')
+                    return redirect('login')
             else:
-                messages.success(request, 'Реєстрація успішна. Перевірте email для активації.')
+                user.save()
+                messages.success(request, 'Реєстрація успішна. Тепер ви можете увійти.')
                 return redirect('login')
     else:
         form = RegisterForm()

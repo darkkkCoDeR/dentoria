@@ -13,6 +13,8 @@ services:
         sync: false
       - key: SITE_URL
         value: https://dentoria.onrender.com
+      - key: REQUIRE_EMAIL_ACTIVATION
+        value: False
       - key: DJANGO_SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
